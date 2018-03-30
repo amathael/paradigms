@@ -11,6 +11,7 @@ import java.util.HashSet;
  * @time 19:06
  */
 
+@Deprecated
 public class SimpleParser implements Parser {
 
     public enum Token {

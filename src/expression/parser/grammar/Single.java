@@ -1,8 +1,8 @@
 package expression.parser.grammar;
 
-import expression.BinaryOperation;
+import expression.AbstractBinaryOperation;
 import expression.CommonExpression;
-import expression.UnaryOperation;
+import expression.AbstractUnaryOperation;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -20,9 +20,9 @@ public class Single {
 
     private String name;
 
-    private Class<? extends BinaryOperation> binaryOperation;
+    private Class<? extends AbstractBinaryOperation> binaryOperation;
 
-    private Class<? extends UnaryOperation> unaryOperation;
+    private Class<? extends AbstractUnaryOperation> unaryOperation;
 
     public Single(String name) {
         this.name = name;
@@ -30,7 +30,7 @@ public class Single {
         unaryOperation = null;
     }
 
-    public Single(String name, Class<? extends BinaryOperation> binaryOperation, Class<? extends UnaryOperation> unaryOperation) {
+    public Single(String name, Class<? extends AbstractBinaryOperation> binaryOperation, Class<? extends AbstractUnaryOperation> unaryOperation) {
         this.name = name;
         this.binaryOperation = binaryOperation;
         this.unaryOperation = unaryOperation;

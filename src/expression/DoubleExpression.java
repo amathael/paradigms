@@ -1,5 +1,7 @@
 package expression;
 
+import expression.exceptions.EvaluationException;
+
 /**
  * Created by isuca in paradigms catalogue
  *
@@ -9,6 +11,6 @@ package expression;
 
 public interface DoubleExpression {
 
-    public double evaluate(double variable);
+    public double evaluate(double variable) throws EvaluationException;
 
 }

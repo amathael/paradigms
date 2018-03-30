@@ -1,5 +1,7 @@
 package expression;
 
+import expression.exceptions.EvaluationException;
+
 /**
  * Created by isuca in paradigms catalogue
  *
@@ -9,6 +11,6 @@ package expression;
 
 public interface TripleExpression {
 
-    public int evaluate(int x, int y, int z);
+    public int evaluate(int x, int y, int z) throws EvaluationException;
 
 }

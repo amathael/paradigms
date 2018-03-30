@@ -95,7 +95,7 @@ public class ParserTest extends BaseTest {
     protected TripleExpression parse(final String expression, final boolean reparse) {
         ops(expression.length());
         try {
-            final UpgradedParser parser = new UpgradedParser();
+            final CustomParser parser = new CustomParser();
             if (reparse) {
                 counter.nextTest();
                 parser.parse(expression);

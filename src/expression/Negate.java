@@ -1,5 +1,8 @@
 package expression;
 
+import expression.exceptions.EvaluationException;
+import expression.exceptions.OverflowException;
+
 /**
  * Created by isuca in paradigms catalogue
  *
@@ -7,10 +10,22 @@ package expression;
  * @time 18:58
  */
 
-public class Negate extends UnaryOperation {
+public class Negate extends AbstractUnaryOperation {
 
     public Negate(CommonExpression argument) {
         super(argument);
+    }
+
+    @Override
+    protected void check(int value) throws EvaluationException {
+        if (value == Integer.MIN_VALUE) {
+            throw new OverflowException();
+        }
+    }
+
+    @Override
+    protected void check(double value) {
+
     }
 
     @Override

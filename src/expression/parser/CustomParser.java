@@ -11,12 +11,12 @@ import expression.parser.grammar.*;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class UpgradedParser implements Parser {
+public class CustomParser implements Parser {
 
     private Tokenizer tokenizer;
     private ExpressionGrammar grammar;
 
-    public UpgradedParser() {
+    public CustomParser() {
         tokenizer = new Tokenizer();
         grammar = new ExpressionGrammar();
 
@@ -36,6 +36,9 @@ public class UpgradedParser implements Parser {
         initToken("mod", new Single("MOD", Mod.class, null), 5);
         initToken("/", new Single("SLASH", Divide.class, null), 5);
         initToken("*", new Single("ASTERISK", Multiply.class, null), 5);
+
+        initToken("**", new Single("POWER", Power.class, null), 6);
+        initToken("//", new Single("LOG", Log.class, null), 6);
 
         tokenizer.addToken("~", new Single("TILDE", null, BitwiseNegate.class));
         tokenizer.addToken("abs", new Single("ABS", null, Abs.class));

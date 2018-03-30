@@ -1,5 +1,7 @@
 package expression;
 
+import expression.exceptions.DoubleUnsupportedException;
+
 /**
  * Created by isuca in paradigms catalogue
  *
@@ -7,10 +9,20 @@ package expression;
  * @time 16:02
  */
 
-public class BitwiseNegate extends UnaryOperation {
+public class BitwiseNegate extends AbstractUnaryOperation {
 
     public BitwiseNegate(CommonExpression argument) {
         super(argument);
+    }
+
+    @Override
+    protected void check(int value) {
+
+    }
+
+    @Override
+    protected void check(double value) throws DoubleUnsupportedException {
+        throw new DoubleUnsupportedException();
     }
 
     @Override
@@ -20,7 +32,7 @@ public class BitwiseNegate extends UnaryOperation {
 
     @Override
     protected double eval(double value) {
-        throw new NumberFormatException("Unsupported operation for non-integer numbers");
+        return 0;
     }
 
 }

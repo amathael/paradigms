@@ -33,17 +33,6 @@ public class ExpressionGrammar {
         }
     }
 
-    public int getLevel(Single token) {
-        int index = 0;
-        for (HashSet<Single> level : binaryPriorityLevels) {
-            if (level.contains(token)) {
-                return index;
-            }
-            index++;
-        }
-        return -1;
-    }
-
     public void addOnLevel(int level, Single token) {
         if (token.isBinary()) {
             while (binaryPriorityLevels.size() < level + 1) {

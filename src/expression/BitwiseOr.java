@@ -1,5 +1,8 @@
 package expression;
 
+import expression.exceptions.DoubleUnsupportedException;
+import expression.exceptions.EvaluationException;
+
 /**
  * Created by isuca in paradigms catalogue
  *
@@ -7,10 +10,20 @@ package expression;
  * @time 16:01
  */
 
-public class BitwiseOr extends BinaryOperation {
+public class BitwiseOr extends AbstractBinaryOperation {
 
     public BitwiseOr(CommonExpression left, CommonExpression right) {
         super(left, right);
+    }
+
+    @Override
+    protected void check(int left, int right) {
+
+    }
+
+    @Override
+    protected void check(double left, double right) throws DoubleUnsupportedException {
+        throw new DoubleUnsupportedException();
     }
 
     @Override
@@ -20,7 +33,7 @@ public class BitwiseOr extends BinaryOperation {
 
     @Override
     protected double eval(double left, double right) {
-        throw new NumberFormatException("Unsupported operation for non-integer numbers");
+        return 0;
     }
 
 }
