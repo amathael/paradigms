@@ -9,6 +9,7 @@ import java.util.HashMap;
  * @time 21:44
  */
 
+@SuppressWarnings("WeakerAccess")
 public class Trie {
 
     private class Node {
@@ -22,6 +23,10 @@ public class Trie {
     }
 
     private Node root;
+
+    public Trie() {
+        root = new Node();
+    }
 
     public void add(String key) {
         Node cur = root;
@@ -38,11 +43,16 @@ public class Trie {
     public int seek(String input, int index) {
         Node cur = root;
         int i = index;
+        boolean isAlpha = true;
         while (i < input.length() && cur.next.containsKey(input.charAt(i))) {
+            if (!Character.isAlphabetic(input.charAt(i))) {
+                isAlpha = false;
+            }
             cur = cur.next.get(input.charAt(i));
             i++;
         }
-        return cur.terminal && input.charAt(i + 1) == ' ' ? i : -1;
+        return cur.terminal && (i == input.length() || !isAlpha ||
+                !Character.isAlphabetic(input.charAt(i)) && !Character.isDigit(input.charAt(i))) ? i : -1;
     }
 
 }

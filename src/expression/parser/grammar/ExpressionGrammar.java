@@ -46,7 +46,7 @@ public class ExpressionGrammar {
 
     public void addOnLevel(int level, Single token) {
         if (token.isBinary()) {
-            while (binaryPriorityLevels.size() < level) {
+            while (binaryPriorityLevels.size() < level + 1) {
                 binaryPriorityLevels.add(new HashSet<>());
             }
             binaryPriorityLevels.get(level).add(token);

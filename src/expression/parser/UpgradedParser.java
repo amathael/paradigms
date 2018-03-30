@@ -62,7 +62,7 @@ public class UpgradedParser implements Parser {
             while (grammar.isOnLevel(level, tokenizer.getToken())) {
                 Single operation = tokenizer.getToken();
                 tokenizer.nextToken();
-                result = operation.apply(parseLevel(level), parseLevel(level));
+                result = operation.apply(result, parseLevel(level + 1));
             }
             return result;
         }
@@ -92,7 +92,7 @@ public class UpgradedParser implements Parser {
             assert "RIGHT_BRACKET".equals(tokenizer.getToken().getName()) : "End of expression expected";
             tokenizer.nextToken();
         } else {
-            throw new Error("Invalid atom token");
+            throw new Error("Invalid atom token ".concat(atom.getName()));
         }
         return result;
     }

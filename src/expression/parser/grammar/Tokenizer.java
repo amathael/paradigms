@@ -38,6 +38,7 @@ public class Tokenizer {
         this.input = input;
         index = 0;
         curToken = null;
+        nextToken();
     }
 
     public void addToken(String value, Single token) {
@@ -66,7 +67,7 @@ public class Tokenizer {
         if (to > -1) {
             String tokenValue = input.substring(from, to);
             curToken = tokens.get(tokenValue);
-            index = to + 1;
+            index = to;
         } else {
             char cur = input.charAt(index);
             if (Character.isDigit(cur)) {
@@ -95,12 +96,10 @@ public class Tokenizer {
     }
 
     public int getConstValue() {
-        assert curToken == CONSTANT : "Incorrect token to ask for value";
         return constValue;
     }
 
     public String getCustomWord() {
-        assert curToken == VARIABLE : "Incorrect token to ask for custom word";
         return customWord;
     }
 
