@@ -21,17 +21,17 @@ public class SimpleParser implements Parser {
         RIGHT_BRACKET,
         MINUS,
         PLUS,
-        AND,
-        OR,
-        XOR,
+        AMPERSAND,
+        VSLASH,
+        CIRCUMFLEX,
         ASTERISK,
         SLASH,
-        LEFT_SHIFT,
-        RIGHT_SHIFT,
+        SHRINK_LEFT,
+        SHRINK_RIGHT,
+        TILDE,
         ABS,
         SQUARE,
         MOD,
-        TILDE,
         COUNT,
         EXPRESSION_END,
     }
@@ -51,8 +51,8 @@ public class SimpleParser implements Parser {
         keywords.put("count", Token.COUNT);
 
         lowcost_operations = new HashSet<>();
-        lowcost_operations.add(Token.LEFT_SHIFT);
-        lowcost_operations.add(Token.RIGHT_SHIFT);
+        lowcost_operations.add(Token.SHRINK_LEFT);
+        lowcost_operations.add(Token.SHRINK_RIGHT);
 
         term_operations = new HashSet<>();
         term_operations.add(Token.MINUS);
@@ -129,24 +129,24 @@ public class SimpleParser implements Parser {
                     curToken = Token.RIGHT_BRACKET;
                     break;
                 case '&':
-                    curToken = Token.AND;
+                    curToken = Token.AMPERSAND;
                     break;
                 case '|':
-                    curToken = Token.OR;
+                    curToken = Token.VSLASH;
                     break;
                 case '~':
                     curToken = Token.TILDE;
                     break;
                 case '^':
-                    curToken = Token.XOR;
+                    curToken = Token.CIRCUMFLEX;
                     break;
                 case '<':
-                    curToken = index + 1 < expression.length && expression[index + 1] == '<' ? Token.LEFT_SHIFT :
+                    curToken = index + 1 < expression.length && expression[index + 1] == '<' ? Token.SHRINK_LEFT :
                             Token.ERROR;
                     index++;
                     break;
                 case '>':
-                    curToken = index + 1 < expression.length && expression[index + 1] == '>' ? Token.RIGHT_SHIFT :
+                    curToken = index + 1 < expression.length && expression[index + 1] == '>' ? Token.SHRINK_RIGHT :
                             Token.ERROR;
                     index++;
                     break;
@@ -191,10 +191,10 @@ public class SimpleParser implements Parser {
             Token op = tokenizer.curToken;
             tokenizer.nextToken();
             switch (op) {
-                case LEFT_SHIFT:
+                case SHRINK_LEFT:
                     result = new ShrinkLeft(result, parseOrExpression());
                     break;
-                case RIGHT_SHIFT:
+                case SHRINK_RIGHT:
                     result = new ShrinkRight(result, parseOrExpression());
                     break;
                 default:
@@ -206,7 +206,7 @@ public class SimpleParser implements Parser {
 
     private CommonExpression parseOrExpression() {
         CommonExpression result = parseXorExpression();
-        while (tokenizer.curToken == Token.OR) {
+        while (tokenizer.curToken == Token.VSLASH) {
             tokenizer.nextToken();
             result = new BitwiseOr(result, parseXorExpression());
         }
@@ -215,7 +215,7 @@ public class SimpleParser implements Parser {
 
     private CommonExpression parseXorExpression() {
         CommonExpression result = parseAndExpression();
-        while (tokenizer.curToken == Token.XOR) {
+        while (tokenizer.curToken == Token.CIRCUMFLEX) {
             tokenizer.nextToken();
             result = new BitwiseXor(result, parseAndExpression());
         }
@@ -224,7 +224,7 @@ public class SimpleParser implements Parser {
 
     private CommonExpression parseAndExpression() {
         CommonExpression result = parseExpression();
-        while (tokenizer.curToken == Token.AND) {
+        while (tokenizer.curToken == Token.AMPERSAND) {
             tokenizer.nextToken();
             result = new BitwiseAnd(result, parseExpression());
         }

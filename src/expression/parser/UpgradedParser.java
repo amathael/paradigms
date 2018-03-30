@@ -1,9 +1,7 @@
 package expression.parser;
 
 import expression.*;
-
-import java.util.*;
-import java.util.function.Consumer;
+import expression.parser.grammar.*;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -15,23 +13,89 @@ import java.util.function.Consumer;
 @SuppressWarnings("WeakerAccess")
 public class UpgradedParser implements Parser {
 
+    private Tokenizer tokenizer;
+    private ExpressionGrammar grammar;
+
+    public UpgradedParser() {
+        tokenizer = new Tokenizer();
+        grammar = new ExpressionGrammar();
+
+        tokenizer.addToken("(", new Single("LEFT_BRACKET"));
+        tokenizer.addToken(")", new Single("RIGHT_BRACKET"));
+
+        initToken("<<", new Single("SHRINK_LEFT", ShrinkLeft.class, null), 0);
+        initToken(">>", new Single("SHRINK_RIGHT", ShrinkRight.class, null), 0);
+
+        initToken("|", new Single("VSLASH", BitwiseOr.class, null), 1);
+        initToken("^", new Single("CIRCUMFLEX", BitwiseXor.class, null), 2);
+        initToken("&", new Single("AMPERSAND", BitwiseAnd.class, null), 3);
+
+        initToken("-", new Single("MINUS", Subtract.class, Negate.class), 4);
+        initToken("+", new Single("PLUS", Add.class, null), 4);
+
+        initToken("mod", new Single("MOD", Mod.class, null), 5);
+        initToken("/", new Single("SLASH", Divide.class, null), 5);
+        initToken("*", new Single("ASTERISK", Multiply.class, null), 5);
+
+        tokenizer.addToken("~", new Single("TILDE", null, BitwiseNegate.class));
+        tokenizer.addToken("abs", new Single("ABS", null, Abs.class));
+        tokenizer.addToken("square", new Single("SQUARE", null, Square.class));
+        tokenizer.addToken("count", new Single("COUNT", null, BitCount.class));
+    }
+
+    public void initToken(String value, Single token, int level) {
+        tokenizer.addToken(value, token);
+        grammar.addOnLevel(level, token);
+    }
+
     @Override
     public CommonExpression parse(String expression) {
-        return null;
+        tokenizer.init(expression);
+        return parseLevel(0);
     }
 
-    private abstract class Token {
-//        static HashMap<String, Token> byKeyword = new HashMap<>();
+    private CommonExpression parseLevel(int level) {
+        if (level == grammar.size()) {
+            return parseFactor();
+        } else {
+            CommonExpression result = parseLevel(level + 1);
+            while (grammar.isOnLevel(level, tokenizer.getToken())) {
+                Single operation = tokenizer.getToken();
+                tokenizer.nextToken();
+                result = operation.apply(parseLevel(level), parseLevel(level));
+            }
+            return result;
+        }
     }
 
-    // @formatter:off
-    private void       deeo(int re) {
-        int a =         1;
-        int bbsdf =     2;
+    private CommonExpression parseFactor() {
+        if (tokenizer.getToken().isUnary()) {
+            Single operation = tokenizer.getToken();
+            tokenizer.nextToken();
+            return operation.apply(parseFactor());
+        } else {
+            return parseAtom();
+        }
     }
-    // @formatter:on
 
-//    private abstract class
+    private CommonExpression parseAtom() {
+        CommonExpression result;
+        Single atom = tokenizer.getToken();
+        tokenizer.nextToken();
+
+        if (atom == Tokenizer.CONSTANT) {
+            result = new Const(tokenizer.getConstValue());
+        } else if (atom == Tokenizer.VARIABLE) {
+            result = new Variable(tokenizer.getCustomWord());
+        } else if ("LEFT_BRACKET".equals(atom.getName())) {
+            result = parseLevel(0);
+            assert "RIGHT_BRACKET".equals(tokenizer.getToken().getName()) : "End of expression expected";
+            tokenizer.nextToken();
+        } else {
+            throw new Error("Invalid atom token");
+        }
+        return result;
+    }
 
     /*
     <full>              <- <expression> (<bit sign> <expression>)*
