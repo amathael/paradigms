@@ -11,39 +11,33 @@ import expression.parser.grammar.*;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class CustomParser implements Parser {
+public class ExpressionParser implements Parser {
 
     private Tokenizer tokenizer;
     private ExpressionGrammar grammar;
 
-    public CustomParser() {
+    public ExpressionParser() {
         tokenizer = new Tokenizer();
         grammar = new ExpressionGrammar();
 
         tokenizer.addToken("(", new Single("LEFT_BRACKET"));
         tokenizer.addToken(")", new Single("RIGHT_BRACKET"));
 
-        initToken("<<", new Single("SHRINK_LEFT", ShrinkLeft.class, null), 0);
-        initToken(">>", new Single("SHRINK_RIGHT", ShrinkRight.class, null), 0);
+        initToken("|", new Single("VSLASH", CheckedBitwiseOr.class, null), 0);
+        initToken("^", new Single("CIRCUMFLEX", CheckedBitwiseXor.class, null), 1);
+        initToken("&", new Single("AMPERSAND", CheckedBitwiseAnd.class, null), 2);
 
-        initToken("|", new Single("VSLASH", BitwiseOr.class, null), 1);
-        initToken("^", new Single("CIRCUMFLEX", BitwiseXor.class, null), 2);
-        initToken("&", new Single("AMPERSAND", BitwiseAnd.class, null), 3);
+        initToken("-", new Single("MINUS", CheckedSubtract.class, CheckedNegate.class), 3);
+        initToken("+", new Single("PLUS", CheckedAdd.class, null), 3);
 
-        initToken("-", new Single("MINUS", Subtract.class, Negate.class), 4);
-        initToken("+", new Single("PLUS", Add.class, null), 4);
+        initToken("/", new Single("SLASH", CheckedDivide.class, null), 4);
+        initToken("*", new Single("ASTERISK", CheckedMultiply.class, null), 4);
 
-        initToken("mod", new Single("MOD", Mod.class, null), 5);
-        initToken("/", new Single("SLASH", Divide.class, null), 5);
-        initToken("*", new Single("ASTERISK", Multiply.class, null), 5);
+        initToken("**", new Single("POWER", CheckedPower.class, null), 5);
+        initToken("//", new Single("LOG", Checked.class, null), 5);
 
-        initToken("**", new Single("POWER", Power.class, null), 6);
-        initToken("//", new Single("LOG", Log.class, null), 6);
-
-        tokenizer.addToken("~", new Single("TILDE", null, BitwiseNegate.class));
-        tokenizer.addToken("abs", new Single("ABS", null, Abs.class));
-        tokenizer.addToken("square", new Single("SQUARE", null, Square.class));
-        tokenizer.addToken("count", new Single("COUNT", null, BitCount.class));
+        tokenizer.addToken("~", new Single("TILDE", null, CheckedBitwiseNegate.class));
+        tokenizer.addToken("count", new Single("COUNT", null, CheckedBitCount.class));
     }
 
     public void initToken(String value, Single token, int level) {

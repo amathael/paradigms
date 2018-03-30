@@ -10,9 +10,9 @@ import expression.exceptions.OverflowException;
  * @time 11:04
  */
 
-public class Add extends AbstractBinaryOperation {
+public class CheckedAdd extends AbstractBinaryOperation {
 
-    public Add(CommonExpression left, CommonExpression right) {
+    public CheckedAdd(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 

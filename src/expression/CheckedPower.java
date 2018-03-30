@@ -12,9 +12,9 @@ import expression.exceptions.OverflowException;
  * @time 10:35
  */
 
-public class Power extends AbstractBinaryOperation {
+public class CheckedPower extends AbstractBinaryOperation {
 
-    public Power(CommonExpression left, CommonExpression right) {
+    public CheckedPower(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 

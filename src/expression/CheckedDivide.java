@@ -11,9 +11,9 @@ import expression.exceptions.OverflowException;
  * @time 11:29
  */
 
-public class Divide extends AbstractBinaryOperation {
+public class CheckedDivide extends AbstractBinaryOperation {
 
-    public Divide(CommonExpression left, CommonExpression right) {
+    public CheckedDivide(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 

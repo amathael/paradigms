@@ -10,9 +10,9 @@ import expression.exceptions.OverflowException;
  * @time 18:58
  */
 
-public class Negate extends AbstractUnaryOperation {
+public class CheckedNegate extends AbstractUnaryOperation {
 
-    public Negate(CommonExpression argument) {
+    public CheckedNegate(CommonExpression argument) {
         super(argument);
     }
 

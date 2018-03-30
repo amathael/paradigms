@@ -10,9 +10,9 @@ import expression.exceptions.EvaluationException;
  * @time 16:15
  */
 
-public class BitCount extends AbstractUnaryOperation {
+public class CheckedBitCount extends AbstractUnaryOperation {
 
-    public BitCount(CommonExpression argument) {
+    public CheckedBitCount(CommonExpression argument) {
         super(argument);
     }
 

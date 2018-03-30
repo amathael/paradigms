@@ -10,9 +10,9 @@ import expression.exceptions.IllegalArgumentException;
  * @time 10:35
  */
 
-public class Log extends AbstractBinaryOperation {
+public class Checked extends AbstractBinaryOperation {
 
-    public Log(CommonExpression left, CommonExpression right) {
+    public Checked(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 

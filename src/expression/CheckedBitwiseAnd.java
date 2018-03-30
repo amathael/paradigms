@@ -10,9 +10,9 @@ import expression.exceptions.EvaluationException;
  * @time 16:00
  */
 
-public class BitwiseAnd extends AbstractBinaryOperation {
+public class CheckedBitwiseAnd extends AbstractBinaryOperation {
 
-    public BitwiseAnd(CommonExpression left, CommonExpression right) {
+    public CheckedBitwiseAnd(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 

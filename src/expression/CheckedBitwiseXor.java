@@ -7,12 +7,12 @@ import expression.exceptions.EvaluationException;
  * Created by isuca in paradigms catalogue
  *
  * @date 23-Mar-18
- * @time 16:01
+ * @time 16:02
  */
 
-public class BitwiseOr extends AbstractBinaryOperation {
+public class CheckedBitwiseXor extends AbstractBinaryOperation {
 
-    public BitwiseOr(CommonExpression left, CommonExpression right) {
+    public CheckedBitwiseXor(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 
@@ -28,7 +28,7 @@ public class BitwiseOr extends AbstractBinaryOperation {
 
     @Override
     protected int eval(int left, int right) {
-        return left | right;
+        return left ^ right;
     }
 
     @Override

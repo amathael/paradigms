@@ -209,7 +209,7 @@ public class SimpleParser implements Parser {
         CommonExpression result = parseXorExpression();
         while (tokenizer.curToken == Token.VSLASH) {
             tokenizer.nextToken();
-            result = new BitwiseOr(result, parseXorExpression());
+            result = new CheckedBitwiseOr(result, parseXorExpression());
         }
         return result;
     }
@@ -218,7 +218,7 @@ public class SimpleParser implements Parser {
         CommonExpression result = parseAndExpression();
         while (tokenizer.curToken == Token.CIRCUMFLEX) {
             tokenizer.nextToken();
-            result = new BitwiseXor(result, parseAndExpression());
+            result = new CheckedBitwiseXor(result, parseAndExpression());
         }
         return result;
     }
@@ -227,7 +227,7 @@ public class SimpleParser implements Parser {
         CommonExpression result = parseExpression();
         while (tokenizer.curToken == Token.AMPERSAND) {
             tokenizer.nextToken();
-            result = new BitwiseAnd(result, parseExpression());
+            result = new CheckedBitwiseAnd(result, parseExpression());
         }
         return result;
     }
@@ -240,10 +240,10 @@ public class SimpleParser implements Parser {
             tokenizer.nextToken();
             switch (op) {
                 case PLUS:
-                    result = new Add(result, parseTerm());
+                    result = new CheckedAdd(result, parseTerm());
                     break;
                 case MINUS:
-                    result = new Subtract(result, parseTerm());
+                    result = new CheckedSubtract(result, parseTerm());
                     break;
                 default:
                     result = null;
@@ -260,10 +260,10 @@ public class SimpleParser implements Parser {
             tokenizer.nextToken();
             switch (op) {
                 case ASTERISK:
-                    result = new Multiply(result, parseSignedFactor());
+                    result = new CheckedMultiply(result, parseSignedFactor());
                     break;
                 case SLASH:
-                    result = new Divide(result, parseSignedFactor());
+                    result = new CheckedDivide(result, parseSignedFactor());
                     break;
                 case MOD:
                     result = new Mod(result, parseSignedFactor());
@@ -281,15 +281,15 @@ public class SimpleParser implements Parser {
             tokenizer.nextToken();
             switch (op) {
                 case MINUS:
-                    return new Negate(parseSignedFactor());
+                    return new CheckedNegate(parseSignedFactor());
                 case ABS:
                     return new Abs(parseSignedFactor());
                 case SQUARE:
                     return new Square(parseSignedFactor());
                 case COUNT:
-                    return new BitCount(parseSignedFactor());
+                    return new CheckedBitCount(parseSignedFactor());
                 case TILDE:
-                    return new BitwiseNegate(parseSignedFactor());
+                    return new CheckedBitwiseNegate(parseSignedFactor());
                 default:
                     return null;
             }

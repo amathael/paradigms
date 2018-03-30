@@ -9,9 +9,9 @@ import expression.exceptions.DoubleUnsupportedException;
  * @time 16:02
  */
 
-public class BitwiseNegate extends AbstractUnaryOperation {
+public class CheckedBitwiseNegate extends AbstractUnaryOperation {
 
-    public BitwiseNegate(CommonExpression argument) {
+    public CheckedBitwiseNegate(CommonExpression argument) {
         super(argument);
     }
 
