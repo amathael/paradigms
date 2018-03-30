@@ -10,9 +10,10 @@ import expression.exceptions.IllegalArgumentException;
  * @time 10:35
  */
 
-public class Checked extends AbstractBinaryOperation {
+@SuppressWarnings("WeakerAccess")
+public class CheckedLog extends AbstractBinaryOperation {
 
-    public Checked(CommonExpression left, CommonExpression right) {
+    public CheckedLog(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 
@@ -31,7 +32,7 @@ public class Checked extends AbstractBinaryOperation {
     @Override
     protected int eval(int left, int right) {
         int power = 1, p = 0;
-        while (power * left <= right && power <= Integer.MAX_VALUE / left) {
+        while (power * right <= left && power <= Integer.MAX_VALUE / right) {
             power *= left;
             p++;
         }

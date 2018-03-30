@@ -1,4 +1,5 @@
 package expression.parser;
+import com.sun.org.apache.xpath.internal.operations.Mod;
 import expression.*;
 
 import java.util.HashMap;
@@ -27,33 +28,20 @@ public class SimpleParser implements Parser {
         CIRCUMFLEX,
         ASTERISK,
         SLASH,
-        SHRINK_LEFT,
-        SHRINK_RIGHT,
         TILDE,
-        ABS,
-        SQUARE,
-        MOD,
         COUNT,
         EXPRESSION_END,
     }
 
     private final HashMap<String, Token> keywords;
 
-    private final HashSet<Token> lowcost_operations;
     private final HashSet<Token> term_operations;
     private final HashSet<Token> factor_operations;
     private final HashSet<Token> unary_operations;
 
     public SimpleParser() {
         keywords = new HashMap<>();
-        keywords.put("abs", Token.ABS);
-        keywords.put("square", Token.SQUARE);
-        keywords.put("mod", Token.MOD);
         keywords.put("count", Token.COUNT);
-
-        lowcost_operations = new HashSet<>();
-        lowcost_operations.add(Token.SHRINK_LEFT);
-        lowcost_operations.add(Token.SHRINK_RIGHT);
 
         term_operations = new HashSet<>();
         term_operations.add(Token.MINUS);
@@ -62,12 +50,9 @@ public class SimpleParser implements Parser {
         factor_operations = new HashSet<>();
         factor_operations.add(Token.ASTERISK);
         factor_operations.add(Token.SLASH);
-        factor_operations.add(Token.MOD);
 
         unary_operations = new HashSet<>();
         unary_operations.add(Token.MINUS);
-        unary_operations.add(Token.ABS);
-        unary_operations.add(Token.SQUARE);
         unary_operations.add(Token.TILDE);
         unary_operations.add(Token.COUNT);
     }
@@ -141,16 +126,6 @@ public class SimpleParser implements Parser {
                 case '^':
                     curToken = Token.CIRCUMFLEX;
                     break;
-                case '<':
-                    curToken = index + 1 < expression.length && expression[index + 1] == '<' ? Token.SHRINK_LEFT :
-                            Token.ERROR;
-                    index++;
-                    break;
-                case '>':
-                    curToken = index + 1 < expression.length && expression[index + 1] == '>' ? Token.SHRINK_RIGHT :
-                            Token.ERROR;
-                    index++;
-                    break;
                 default:
                     if (Character.isDigit(cur)) {
                         constValue = 0;
@@ -186,23 +161,7 @@ public class SimpleParser implements Parser {
     private Tokenizer tokenizer;
 
     private CommonExpression parseFullExpression() {
-        CommonExpression result = parseOrExpression();
-        while (tokenizer.curToken != Token.EXPRESSION_END && tokenizer.curToken != Token.RIGHT_BRACKET
-                && lowcost_operations.contains(tokenizer.curToken)) {
-            Token op = tokenizer.curToken;
-            tokenizer.nextToken();
-            switch (op) {
-                case SHRINK_LEFT:
-                    result = new ShrinkLeft(result, parseOrExpression());
-                    break;
-                case SHRINK_RIGHT:
-                    result = new ShrinkRight(result, parseOrExpression());
-                    break;
-                default:
-                    result = null;
-            }
-        }
-        return result;
+        return parseOrExpression();
     }
 
     private CommonExpression parseOrExpression() {
@@ -265,9 +224,6 @@ public class SimpleParser implements Parser {
                 case SLASH:
                     result = new CheckedDivide(result, parseSignedFactor());
                     break;
-                case MOD:
-                    result = new Mod(result, parseSignedFactor());
-                    break;
                 default:
                     result = null;
             }
@@ -282,10 +238,6 @@ public class SimpleParser implements Parser {
             switch (op) {
                 case MINUS:
                     return new CheckedNegate(parseSignedFactor());
-                case ABS:
-                    return new Abs(parseSignedFactor());
-                case SQUARE:
-                    return new Square(parseSignedFactor());
                 case COUNT:
                     return new CheckedBitCount(parseSignedFactor());
                 case TILDE:

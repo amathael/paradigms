@@ -95,6 +95,10 @@ public class Tokenizer {
         }
     }
 
+    public int getPosition() {
+        return index;
+    }
+
     public int getConstValue() {
         return constValue;
     }

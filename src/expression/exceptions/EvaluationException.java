@@ -7,7 +7,6 @@ package expression.exceptions;
  * @time 14:48
  */
 
-@SuppressWarnings("WeakerAccess")
 public class EvaluationException extends Exception {
 
     public EvaluationException() {

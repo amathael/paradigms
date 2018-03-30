@@ -13,7 +13,6 @@ public class Variable implements CommonExpression {
     private final String name;
 
     public Variable(String name) {
-        assert "x".equals(name) || "y".equals(name) || "z".equals(name) : "Unsupported variable name";
         this.name = name;
     }
 

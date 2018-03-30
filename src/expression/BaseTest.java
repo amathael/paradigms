@@ -1,6 +1,7 @@
 package expression;
 
 import base.TestCounter;
+import expression.exceptions.EvaluationException;
 
 import java.util.*;
 import java.util.stream.Collectors;

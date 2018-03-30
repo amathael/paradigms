@@ -18,9 +18,9 @@ public class CheckedMultiply extends AbstractBinaryOperation {
 
     @Override
     protected void check(int left, int right) throws EvaluationException {
-        if (left > 0 && right > 0 && Integer.MAX_VALUE / left > right ||
-                left > 0 && right < 0 && Integer.MIN_VALUE / right > left ||
-                left < 0 && right > 0 && Integer.MIN_VALUE / left > right ||
+        if (left > 0 && right > 0 && Integer.MAX_VALUE / left < right ||
+                left > 0 && right < 0 && Integer.MIN_VALUE / left > right ||
+                left < 0 && right > 0 && Integer.MIN_VALUE / right > left ||
                 left < 0 && right < 0 && Integer.MAX_VALUE / left > right) {
             throw new OverflowException();
         }
@@ -29,7 +29,7 @@ public class CheckedMultiply extends AbstractBinaryOperation {
     @Override
     protected void check(double left, double right) throws EvaluationException {
         double l = left > 0 ? left : -left, r = right > 0 ? right : -right;
-        if (left > Double.MAX_VALUE / right) {
+        if (l > Double.MAX_VALUE / r) {
             throw new OverflowException();
         }
     }

@@ -1,6 +1,8 @@
 package expression.parser;
 
 import expression.*;
+import expression.exceptions.GrammarExpression;
+import expression.exceptions.UnsupportedVariableNameException;
 import expression.parser.grammar.*;
 
 /**
@@ -34,10 +36,12 @@ public class ExpressionParser implements Parser {
         initToken("*", new Single("ASTERISK", CheckedMultiply.class, null), 4);
 
         initToken("**", new Single("POWER", CheckedPower.class, null), 5);
-        initToken("//", new Single("LOG", Checked.class, null), 5);
+        initToken("//", new Single("LOG", CheckedLog.class, null), 5);
 
         tokenizer.addToken("~", new Single("TILDE", null, CheckedBitwiseNegate.class));
         tokenizer.addToken("count", new Single("COUNT", null, CheckedBitCount.class));
+        tokenizer.addToken("log10", new Single("LOG10", null, CheckedLog10.class));
+        tokenizer.addToken("pow10", new Single("POW10", null, CheckedPower10.class));
     }
 
     public void initToken(String value, Single token, int level) {
@@ -46,12 +50,12 @@ public class ExpressionParser implements Parser {
     }
 
     @Override
-    public CommonExpression parse(String expression) {
+    public CommonExpression parse(String expression) throws GrammarExpression {
         tokenizer.init(expression);
         return parseLevel(0);
     }
 
-    private CommonExpression parseLevel(int level) {
+    private CommonExpression parseLevel(int level) throws GrammarExpression {
         if (level == grammar.size()) {
             return parseFactor();
         } else {
@@ -65,7 +69,7 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    private CommonExpression parseFactor() {
+    private CommonExpression parseFactor() throws GrammarExpression {
         if (tokenizer.getToken().isUnary()) {
             Single operation = tokenizer.getToken();
             tokenizer.nextToken();
@@ -75,7 +79,7 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    private CommonExpression parseAtom() {
+    private CommonExpression parseAtom() throws GrammarExpression {
         CommonExpression result;
         Single atom = tokenizer.getToken();
         tokenizer.nextToken();
@@ -83,13 +87,19 @@ public class ExpressionParser implements Parser {
         if (atom == Tokenizer.CONSTANT) {
             result = new Const(tokenizer.getConstValue());
         } else if (atom == Tokenizer.VARIABLE) {
+            String name = tokenizer.getCustomWord();
+            if (!"x".equals(name) && !"y".equals(name) && !"z".equals(name)) {
+                throw new UnsupportedVariableNameException(name, tokenizer.getPosition());
+            }
             result = new Variable(tokenizer.getCustomWord());
         } else if ("LEFT_BRACKET".equals(atom.getName())) {
             result = parseLevel(0);
-            assert "RIGHT_BRACKET".equals(tokenizer.getToken().getName()) : "End of expression expected";
+            if (!"RIGHT_BRACKET".equals(tokenizer.getToken().getName())) {
+                throw new GrammarExpression("Right bracket expected", tokenizer.getPosition());
+            }
             tokenizer.nextToken();
         } else {
-            throw new Error("Invalid atom token ".concat(atom.getName()));
+            throw new GrammarExpression("Unknown token", tokenizer.getPosition());
         }
         return result;
     }
