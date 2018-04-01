@@ -24,7 +24,7 @@ public class CheckedPower extends AbstractBinaryOperation {
 
     @Override
     protected int eval(int left, int right) throws EvaluationException {
-        if (left == 0 && right == 0) {
+        if (right < 0 || left == 0 && right == 0) {
             throw new IllegalArgumentException();
         }
         if (right == 0) {

@@ -24,7 +24,10 @@ public class CheckedMultiply extends AbstractBinaryOperation {
     @Override
     protected int eval(int left, int right) throws EvaluationException {
         int limit = left > 0 == right > 0 ? Integer.MAX_VALUE : Integer.MIN_VALUE;
-        if (right > 0 && limit / left > right || right < 0 && limit / left < right) {
+        if (left < 0 && right < 0 && limit / left > right ||
+                left < 0 && right > 0 && limit / right > left ||
+                left > 0 && right < 0 && limit / left > right ||
+                left > 0 && right > 0 && limit / right < left) {
             throw new OverflowException();
         }
         return left * right;
