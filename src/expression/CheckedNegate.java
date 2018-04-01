@@ -17,19 +17,10 @@ public class CheckedNegate extends AbstractUnaryOperation {
     }
 
     @Override
-    protected void check(int value) throws EvaluationException {
+    protected int eval(int value) throws EvaluationException {
         if (value == Integer.MIN_VALUE) {
             throw new OverflowException();
         }
-    }
-
-    @Override
-    protected void check(double value) {
-
-    }
-
-    @Override
-    protected int eval(int value) {
         return -value;
     }
 

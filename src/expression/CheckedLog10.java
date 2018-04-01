@@ -2,7 +2,6 @@ package expression;
 
 import expression.exceptions.DoubleUnsupportedException;
 import expression.exceptions.EvaluationException;
-import expression.exceptions.IllegalArgumentException;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -18,30 +17,13 @@ public class CheckedLog10 extends AbstractUnaryOperation {
     }
 
     @Override
-    protected void check(int value) throws EvaluationException {
-        if (value <= 0) {
-            throw new IllegalArgumentException();
-        }
+    protected int eval(int value) throws EvaluationException {
+        return new CheckedLog().eval(value, 10);
     }
 
     @Override
-    protected void check(double value) throws EvaluationException {
-        throw new DoubleUnsupportedException();
-    }
-
-    @Override
-    protected int eval(int value) {
-        int power = 1, p = 0;
-        while (power * 10 <= value && power <= Integer.MAX_VALUE / value) {
-            power *= value;
-            p++;
-        }
-        return p;
-    }
-
-    @Override
-    protected double eval(double value) {
-        return 0;
+    protected double eval(double value) throws EvaluationException {
+        return new CheckedLog().eval(value, 10);
     }
 
 }

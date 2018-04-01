@@ -8,9 +8,9 @@ package expression.exceptions;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class GrammarExpression extends Exception {
+public class GrammarException extends Exception {
 
-    public GrammarExpression(String msg, int position) {
+    public GrammarException(String msg, int position) {
         super(msg.concat(" before position ").concat(String.valueOf(position)));
     }
 

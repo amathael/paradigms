@@ -12,42 +12,27 @@ import java.util.HashSet;
 
 public class ExpressionGrammar {
 
-    private ArrayList<HashSet<Single>> binaryPriorityLevels;
+    private ArrayList<HashSet<Token>> priorityLevels;
 
     public ExpressionGrammar() {
-        binaryPriorityLevels = new ArrayList<>();
+        priorityLevels = new ArrayList<>();
     }
 
-    public void addLevel() {
-        binaryPriorityLevels.add(new HashSet<>());
-    }
-
-    public void addLevel(int level) {
-        binaryPriorityLevels.add(level, new HashSet<>());
-    }
-
-    public void addLast(Single token) {
-        assert binaryPriorityLevels.size() != 0 : "Grammar has no priority levels yet";
+    public void addOnLevel(int level, Token token) {
         if (token.isBinary()) {
-            binaryPriorityLevels.get(binaryPriorityLevels.size() - 1).add(token);
-        }
-    }
-
-    public void addOnLevel(int level, Single token) {
-        if (token.isBinary()) {
-            while (binaryPriorityLevels.size() < level + 1) {
-                binaryPriorityLevels.add(new HashSet<>());
+            while (priorityLevels.size() < level + 1) {
+                priorityLevels.add(new HashSet<>());
             }
-            binaryPriorityLevels.get(level).add(token);
+            priorityLevels.get(level).add(token);
         }
     }
 
-    public boolean isOnLevel(int level, Single token) {
-        return binaryPriorityLevels.get(level).contains(token);
+    public boolean isOnLevel(int level, Token token) {
+        return priorityLevels.get(level).contains(token);
     }
 
     public int size() {
-        return binaryPriorityLevels.size();
+        return priorityLevels.size();
     }
 
 }

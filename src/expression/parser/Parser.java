@@ -1,7 +1,7 @@
 package expression.parser;
 
 import expression.CommonExpression;
-import expression.exceptions.GrammarExpression;
+import expression.exceptions.GrammarException;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -12,6 +12,6 @@ import expression.exceptions.GrammarExpression;
 
 public interface Parser {
 
-    public CommonExpression parse(String expression) throws GrammarExpression;
+    public CommonExpression parse(String expression) throws GrammarException;
 
 }

@@ -14,44 +14,36 @@ import expression.exceptions.OverflowException;
 
 public class CheckedPower extends AbstractBinaryOperation {
 
+    CheckedPower() {
+        super();
+    }
+
     public CheckedPower(CommonExpression left, CommonExpression right) {
         super(left, right);
     }
 
     @Override
-    protected void check(int left, int right) throws EvaluationException {
-        if (right < 0) {
+    protected int eval(int left, int right) throws EvaluationException {
+        if (left == 0 && right == 0) {
             throw new IllegalArgumentException();
         }
-        int power = 1, p = 0;
-        while (p < right) {
-            if (power > 0 && left > 0 && power > Integer.MAX_VALUE / left ||
-                    power > 0 && left < 0 && power > Integer.MIN_VALUE / left ||
-                    power < 0 && left < 0 && power < Integer.MIN_VALUE / left) {
-                throw new OverflowException();
+        if (right == 0) {
+            return 1;
+        } else if (right == 1) {
+            return left;
+        } else {
+            if (right % 2 == 1) {
+                return new CheckedMultiply().eval(eval(left, right - 1), left);
+            } else {
+                int half = eval(left, right / 2);
+                return new CheckedMultiply().eval(half, half);
             }
-            p++;
-            power *= left;
         }
     }
 
     @Override
-    protected void check(double left, double right) throws EvaluationException {
+    protected double eval(double left, double right) throws EvaluationException {
         throw new DoubleUnsupportedException();
-    }
-
-    @Override
-    protected int eval(int left, int right) {
-        int power = 1;
-        for (int i = 0; i < right; i++) {
-            power *= left;
-        }
-        return power;
-    }
-
-    @Override
-    protected double eval(double left, double right) {
-        return 0;
     }
 
 }

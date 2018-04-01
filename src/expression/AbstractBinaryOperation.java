@@ -2,6 +2,7 @@ package expression;
 
 import expression.exceptions.DoubleUnsupportedException;
 import expression.exceptions.EvaluationException;
+import expression.exceptions.IllegalArgumentException;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -20,33 +21,33 @@ public abstract class AbstractBinaryOperation implements CommonExpression {
         this.right = right;
     }
 
-    protected abstract void check(int left, int right) throws EvaluationException;
+    protected AbstractBinaryOperation() {
+        this.left = this.right = null;
+    }
 
-    protected abstract void check(double left, double right) throws EvaluationException;
+    protected abstract int eval(int left, int right) throws EvaluationException;
 
-    protected abstract int eval(int left, int right);
-
-    protected abstract double eval(double left, double right);
+    protected abstract double eval(double left, double right) throws EvaluationException;
 
     @Override
     public int evaluate(int variable) throws EvaluationException {
-        int l = left.evaluate(variable), r = right.evaluate(variable);
-        check(l, r);
-        return eval(l, r);
+        assert left != null && right != null : "Temporary object evaluation is not legal";
+        return eval(left.evaluate(variable), right.evaluate(variable));
     }
 
     @Override
     public double evaluate(double variable) throws EvaluationException {
-        double l = left.evaluate(variable), r = right.evaluate(variable);
-        check(l, r);
-        return eval(l, r);
+        assert left != null && right != null : "Temporary object evaluation is not legal";
+        if (Double.isNaN(variable)) {
+            throw new IllegalArgumentException();
+        }
+        return eval(left.evaluate(variable), right.evaluate(variable));
     }
 
     @Override
     public int evaluate(int x, int y, int z) throws EvaluationException {
-        int l = left.evaluate(x, y, z), r = right.evaluate(x, y, z);
-        check(l, r);
-        return eval(l, r);
+        assert left != null && right != null : "Temporary object evaluation is not legal";
+        return eval(left.evaluate(x, y, z), right.evaluate(x, y, z));
     }
 
 }

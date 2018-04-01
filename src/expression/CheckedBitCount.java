@@ -17,23 +17,13 @@ public class CheckedBitCount extends AbstractUnaryOperation {
     }
 
     @Override
-    protected void check(int value) {
-
-    }
-
-    @Override
-    protected void check(double value) throws DoubleUnsupportedException {
-        throw new DoubleUnsupportedException();
-    }
-
-    @Override
     protected int eval(int value) {
         return Integer.bitCount(value);
     }
 
     @Override
-    protected double eval(double value) {
-        return 0;
+    protected double eval(double value) throws EvaluationException {
+        throw new DoubleUnsupportedException();
     }
 
 }

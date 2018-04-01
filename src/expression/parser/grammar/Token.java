@@ -16,7 +16,7 @@ import java.util.Objects;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class Single {
+public class Token {
 
     private String name;
 
@@ -24,13 +24,13 @@ public class Single {
 
     private Class<? extends AbstractUnaryOperation> unaryOperation;
 
-    public Single(String name) {
+    public Token(String name) {
         this.name = name;
         binaryOperation = null;
         unaryOperation = null;
     }
 
-    public Single(String name, Class<? extends AbstractBinaryOperation> binaryOperation, Class<? extends AbstractUnaryOperation> unaryOperation) {
+    public Token(String name, Class<? extends AbstractBinaryOperation> binaryOperation, Class<? extends AbstractUnaryOperation> unaryOperation) {
         this.name = name;
         this.binaryOperation = binaryOperation;
         this.unaryOperation = unaryOperation;
@@ -70,10 +70,10 @@ public class Single {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Single single = (Single) o;
-        return Objects.equals(name, single.name) &&
-                Objects.equals(binaryOperation, single.binaryOperation) &&
-                Objects.equals(unaryOperation, single.unaryOperation);
+        Token token = (Token) o;
+        return Objects.equals(name, token.name) &&
+                Objects.equals(binaryOperation, token.binaryOperation) &&
+                Objects.equals(unaryOperation, token.unaryOperation);
     }
 
     @Override

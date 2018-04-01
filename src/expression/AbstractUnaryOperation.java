@@ -2,6 +2,7 @@ package expression;
 
 import expression.exceptions.DoubleUnsupportedException;
 import expression.exceptions.EvaluationException;
+import expression.exceptions.IllegalArgumentException;
 import expression.exceptions.OverflowException;
 
 /**
@@ -20,33 +21,26 @@ public abstract class AbstractUnaryOperation implements CommonExpression {
         this.argument = argument;
     }
 
-    protected abstract void check(int value) throws EvaluationException;
+    protected abstract int eval(int value) throws EvaluationException;
 
-    protected abstract void check(double value) throws EvaluationException;
-
-    protected abstract int eval(int value);
-
-    protected abstract double eval(double value);
+    protected abstract double eval(double value) throws EvaluationException;
 
     @Override
     public int evaluate(int variable) throws EvaluationException {
-        int value = argument.evaluate(variable);
-        check(value);
-        return eval(value);
+        return eval(argument.evaluate(variable));
     }
 
     @Override
     public double evaluate(double variable) throws EvaluationException {
-        double value = argument.evaluate(variable);
-        check(value);
-        return eval(value);
+        if (Double.isNaN(variable)) {
+            throw new IllegalArgumentException();
+        }
+        return eval(argument.evaluate(variable));
     }
 
     @Override
     public int evaluate(int x, int y, int z) throws EvaluationException {
-        int value = argument.evaluate(x, y, z);
-        check(value);
-        return eval(value);
+        return eval(argument.evaluate(x, y, z));
     }
 
 }

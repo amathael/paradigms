@@ -1,7 +1,7 @@
 package expression.parser;
 
 import expression.*;
-import expression.exceptions.GrammarExpression;
+import expression.exceptions.GrammarException;
 import expression.exceptions.UnsupportedVariableNameException;
 import expression.parser.grammar.*;
 
@@ -22,70 +22,82 @@ public class ExpressionParser implements Parser {
         tokenizer = new Tokenizer();
         grammar = new ExpressionGrammar();
 
-        tokenizer.addToken("(", new Single("LEFT_BRACKET"));
-        tokenizer.addToken(")", new Single("RIGHT_BRACKET"));
+        tokenizer.addToken("(", new Token("LEFT_BRACKET"));
+        tokenizer.addToken(")", new Token("RIGHT_BRACKET"));
 
-        initToken("|", new Single("VSLASH", CheckedBitwiseOr.class, null), 0);
-        initToken("^", new Single("CIRCUMFLEX", CheckedBitwiseXor.class, null), 1);
-        initToken("&", new Single("AMPERSAND", CheckedBitwiseAnd.class, null), 2);
+        initToken("|", new Token("VSLASH", CheckedBitwiseOr.class, null), 0);
+        initToken("^", new Token("CIRCUMFLEX", CheckedBitwiseXor.class, null), 1);
+        initToken("&", new Token("AMPERSAND", CheckedBitwiseAnd.class, null), 2);
 
-        initToken("-", new Single("MINUS", CheckedSubtract.class, CheckedNegate.class), 3);
-        initToken("+", new Single("PLUS", CheckedAdd.class, null), 3);
+        initToken("-", new Token("MINUS", CheckedSubtract.class, CheckedNegate.class), 3);
+        initToken("+", new Token("PLUS", CheckedAdd.class, null), 3);
 
-        initToken("/", new Single("SLASH", CheckedDivide.class, null), 4);
-        initToken("*", new Single("ASTERISK", CheckedMultiply.class, null), 4);
+        initToken("/", new Token("SLASH", CheckedDivide.class, null), 4);
+        initToken("*", new Token("ASTERISK", CheckedMultiply.class, null), 4);
 
-        initToken("**", new Single("POWER", CheckedPower.class, null), 5);
-        initToken("//", new Single("LOG", CheckedLog.class, null), 5);
+        initToken("**", new Token("POWER", CheckedPower.class, null), 5);
+        initToken("//", new Token("LOG", CheckedLog.class, null), 5);
 
-        tokenizer.addToken("~", new Single("TILDE", null, CheckedBitwiseNegate.class));
-        tokenizer.addToken("count", new Single("COUNT", null, CheckedBitCount.class));
-        tokenizer.addToken("log10", new Single("LOG10", null, CheckedLog10.class));
-        tokenizer.addToken("pow10", new Single("POW10", null, CheckedPower10.class));
+        tokenizer.addToken("~", new Token("TILDE", null, CheckedBitwiseNegate.class));
+        tokenizer.addToken("count", new Token("COUNT", null, CheckedBitCount.class));
+        tokenizer.addToken("log10", new Token("LOG10", null, CheckedLog10.class));
+        tokenizer.addToken("pow10", new Token("POW10", null, CheckedPower10.class));
     }
 
-    public void initToken(String value, Single token, int level) {
+    public void initToken(String value, Token token, int level) {
         tokenizer.addToken(value, token);
         grammar.addOnLevel(level, token);
     }
 
     @Override
-    public CommonExpression parse(String expression) throws GrammarExpression {
+    public CommonExpression parse(String expression) throws GrammarException {
         tokenizer.init(expression);
-        return parseLevel(0);
+        return parseLevel(0, 0);
     }
 
-    private CommonExpression parseLevel(int level) throws GrammarExpression {
+    private CommonExpression parseLevel(int level, int brackets) throws GrammarException {
         if (level == grammar.size()) {
-            return parseFactor();
+            return parseFactor(brackets);
         } else {
-            CommonExpression result = parseLevel(level + 1);
+            CommonExpression result = parseLevel(level + 1, brackets);
             while (grammar.isOnLevel(level, tokenizer.getToken())) {
-                Single operation = tokenizer.getToken();
-                tokenizer.nextToken();
-                result = operation.apply(result, parseLevel(level + 1));
+                Token operation = tokenizer.getToken();
+                tokenizer.nextToken(true);
+                result = operation.apply(result, parseLevel(level + 1, brackets));
+            }
+            if (tokenizer.getToken() == Tokenizer.ERROR) {
+                throw new GrammarException("Unknown token", tokenizer.getPosition());
+            }
+            if (!tokenizer.getToken().isUnary() && !tokenizer.getToken().isBinary() &&
+                    !(tokenizer.getToken() == Tokenizer.EXPRESSION_END) &&
+                    !("RIGHT_BRACKET".equals(tokenizer.getToken().getName()) && brackets > 0)) {
+                throw new GrammarException("Incorrect token, operation expected", tokenizer.getPosition());
             }
             return result;
         }
     }
 
-    private CommonExpression parseFactor() throws GrammarExpression {
+    private CommonExpression parseFactor(int brackets) throws GrammarException {
         if (tokenizer.getToken().isUnary()) {
-            Single operation = tokenizer.getToken();
-            tokenizer.nextToken();
-            return operation.apply(parseFactor());
+            Token operation = tokenizer.getToken();
+            tokenizer.nextToken(false);
+            return operation.apply(parseFactor(brackets));
         } else {
-            return parseAtom();
+            return parseAtom(brackets);
         }
     }
 
-    private CommonExpression parseAtom() throws GrammarExpression {
+    private CommonExpression parseAtom(int brackets) throws GrammarException {
         CommonExpression result;
-        Single atom = tokenizer.getToken();
-        tokenizer.nextToken();
+        Token atom = tokenizer.getToken();
+        tokenizer.nextToken(true);
 
         if (atom == Tokenizer.CONSTANT) {
-            result = new Const(tokenizer.getConstValue());
+            try {
+                result = new Const(Integer.parseInt(tokenizer.getCustomWord()));
+            } catch (NumberFormatException e) {
+                throw new GrammarException("Too large constant ".concat(tokenizer.getCustomWord()), tokenizer.getPosition());
+            }
         } else if (atom == Tokenizer.VARIABLE) {
             String name = tokenizer.getCustomWord();
             if (!"x".equals(name) && !"y".equals(name) && !"z".equals(name)) {
@@ -93,13 +105,13 @@ public class ExpressionParser implements Parser {
             }
             result = new Variable(tokenizer.getCustomWord());
         } else if ("LEFT_BRACKET".equals(atom.getName())) {
-            result = parseLevel(0);
+            result = parseLevel(0, brackets + 1);
             if (!"RIGHT_BRACKET".equals(tokenizer.getToken().getName())) {
-                throw new GrammarExpression("Right bracket expected", tokenizer.getPosition());
+                throw new GrammarException("Right bracket expected", tokenizer.getPosition());
             }
-            tokenizer.nextToken();
+            tokenizer.nextToken(true);
         } else {
-            throw new GrammarExpression("Unknown token", tokenizer.getPosition());
+            throw new GrammarException("Unknown token", tokenizer.getPosition());
         }
         return result;
     }

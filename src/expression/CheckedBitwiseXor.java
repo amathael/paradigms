@@ -17,23 +17,13 @@ public class CheckedBitwiseXor extends AbstractBinaryOperation {
     }
 
     @Override
-    protected void check(int left, int right) {
-
-    }
-
-    @Override
-    protected void check(double left, double right) throws DoubleUnsupportedException {
-        throw new DoubleUnsupportedException();
-    }
-
-    @Override
     protected int eval(int left, int right) {
         return left ^ right;
     }
 
     @Override
-    protected double eval(double left, double right) {
-        return 0;
+    protected double eval(double left, double right) throws EvaluationException {
+        throw new DoubleUnsupportedException();
     }
 
 }

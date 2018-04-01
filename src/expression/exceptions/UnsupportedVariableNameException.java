@@ -7,7 +7,7 @@ package expression.exceptions;
  * @time 16:52
  */
 
-public class UnsupportedVariableNameException extends GrammarExpression {
+public class UnsupportedVariableNameException extends GrammarException {
 
     public UnsupportedVariableNameException(String msg, int position) {
         super(msg, position);

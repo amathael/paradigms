@@ -12,21 +12,20 @@ import java.util.HashMap;
 @SuppressWarnings("WeakerAccess")
 public class Tokenizer {
 
-    private HashMap<String, Single> tokens;
-    public static final Single
-            CONSTANT = new Single("CONST"),
-            VARIABLE = new Single("VARIABLE"),
-            EXPRESSION_END = new Single("EXPRESSION_END"),
-            ERROR = new Single("ERROR");
+    private HashMap<String, Token> tokens;
+    public static final Token
+            CONSTANT = new Token("CONST"),
+            VARIABLE = new Token("VARIABLE"),
+            EXPRESSION_END = new Token("EXPRESSION_END"),
+            ERROR = new Token("ERROR");
 
     private static final boolean ALLOW_LEADING_ZEROES = true;
 
     private Trie trie;
     private String input;
     private int index;
-    private Single curToken;
+    private Token curToken;
 
-    private int constValue;
     private String customWord;
 
     public Tokenizer() {
@@ -38,15 +37,15 @@ public class Tokenizer {
         this.input = input;
         index = 0;
         curToken = null;
-        nextToken();
+        nextToken(false);
     }
 
-    public void addToken(String value, Single token) {
+    public void addToken(String value, Token token) {
         tokens.put(value, token);
         trie.add(value);
     }
 
-    public Single getToken() {
+    public Token getToken() {
         return curToken;
     }
 
@@ -56,7 +55,34 @@ public class Tokenizer {
         }
     }
 
-    public void nextToken() {
+    private void readNumber(boolean negative) {
+        StringBuilder sb = new StringBuilder();
+        if (negative) {
+            sb.append("-");
+        }
+        int start = index;
+        boolean startsWithNull = input.charAt(index) == '0';
+        while (index < input.length() && Character.isDigit(input.charAt(index))) {
+            sb.append(input.charAt(index));
+            index++;
+        }
+        //noinspection ConstantConditions
+        curToken = startsWithNull && index > start + 1 && !Tokenizer.ALLOW_LEADING_ZEROES ? ERROR : CONSTANT;
+        customWord = sb.toString();
+    }
+
+    private void readWord() {
+        StringBuilder sb = new StringBuilder();
+        while (index < input.length() &&
+                (Character.isAlphabetic(input.charAt(index)) || Character.isDigit(input.charAt(index)))) {
+            sb.append(input.charAt(index));
+            index++;
+        }
+        curToken = VARIABLE;
+        customWord = sb.toString();
+    }
+
+    public void nextToken(boolean ignoreNegative) {
         skipSpaces();
         if (index == input.length()) {
             curToken = EXPRESSION_END;
@@ -68,27 +94,14 @@ public class Tokenizer {
             String tokenValue = input.substring(from, to);
             curToken = tokens.get(tokenValue);
             index = to;
+            if ("MINUS".equals(curToken.getName()) && Character.isDigit(input.charAt(to)) && !ignoreNegative) {
+                readNumber(true);
+            }
         } else {
-            char cur = input.charAt(index);
-            if (Character.isDigit(cur)) {
-                constValue = 0;
-                int start = index;
-                boolean startsWithNull = cur == '0';
-                while (index < input.length() && Character.isDigit(input.charAt(index))) {
-                    constValue = constValue * 10 + (input.charAt(index) - '0');
-                    index++;
-                }
-                //noinspection ConstantConditions
-                curToken = startsWithNull && cur > start + 1 && !Tokenizer.ALLOW_LEADING_ZEROES ? ERROR : CONSTANT;
-            } else if (Character.isAlphabetic(cur)) {
-                StringBuilder sb = new StringBuilder();
-                while (index < input.length() &&
-                        (Character.isAlphabetic(input.charAt(index)) || Character.isDigit(input.charAt(index)))) {
-                    sb.append(input.charAt(index));
-                    index++;
-                }
-                curToken = VARIABLE;
-                customWord = sb.toString();
+            if (Character.isDigit(input.charAt(index))) {
+                readNumber(false);
+            } else if (Character.isAlphabetic(input.charAt(index))) {
+                readWord();
             } else {
                 curToken = ERROR;
             }
@@ -97,10 +110,6 @@ public class Tokenizer {
 
     public int getPosition() {
         return index;
-    }
-
-    public int getConstValue() {
-        return constValue;
     }
 
     public String getCustomWord() {

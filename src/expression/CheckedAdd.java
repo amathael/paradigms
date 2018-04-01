@@ -1,6 +1,7 @@
 package expression;
 
 import expression.exceptions.EvaluationException;
+import expression.exceptions.IllegalArgumentException;
 import expression.exceptions.OverflowException;
 
 /**
@@ -17,26 +18,21 @@ public class CheckedAdd extends AbstractBinaryOperation {
     }
 
     @Override
-    protected void check(int left, int right) throws EvaluationException {
+    protected int eval(int left, int right) throws EvaluationException {
         if (left > 0 && Integer.MAX_VALUE - left < right || left < 0 && Integer.MIN_VALUE - left > right) {
             throw new OverflowException();
         }
-    }
-
-    @Override
-    protected void check(double left, double right) throws EvaluationException {
-        if (left > 0 && Double.MAX_VALUE - left < right || left < 0 && Double.MIN_VALUE - left > right) {
-            throw new OverflowException();
-        }
-    }
-
-    @Override
-    protected int eval(int left, int right) {
         return left + right;
     }
 
     @Override
-    protected double eval(double left, double right) {
+    protected double eval(double left, double right) throws EvaluationException {
+        if (Double.isNaN(left) || Double.isNaN(right)) {
+            throw new IllegalArgumentException();
+        }
+        if (left > 0 && Double.MAX_VALUE - left < right || left < 0 && -Double.MAX_VALUE - left > right) {
+            throw new OverflowException();
+        }
         return left + right;
     }
 
