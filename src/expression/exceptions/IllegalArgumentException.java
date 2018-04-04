@@ -7,10 +7,15 @@ package expression.exceptions;
  * @time 15:44
  */
 
+@SuppressWarnings("WeakerAccess")
 public class IllegalArgumentException extends EvaluationException {
 
     public IllegalArgumentException() {
         super();
+    }
+
+    public IllegalArgumentException(String reason) {
+        super(reason);
     }
 
 }

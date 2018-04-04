@@ -1,6 +1,8 @@
 package expression.parser;
 
-import expression.*;
+import expression.calc.Calculator;
+import expression.calc.IntegerCalculator;
+import expression.elements.*;
 import expression.exceptions.GrammarException;
 import expression.exceptions.UnsupportedVariableNameException;
 import expression.parser.grammar.*;
@@ -17,6 +19,7 @@ public class ExpressionParser implements Parser {
 
     private Tokenizer tokenizer;
     private ExpressionGrammar grammar;
+    Calculator calc = new IntegerCalculator();
 
     public ExpressionParser() {
         tokenizer = new Tokenizer();
@@ -50,34 +53,35 @@ public class ExpressionParser implements Parser {
     }
 
     @Override
-    public CommonExpression parse(String expression) throws GrammarException {
+    public TripleExpression parse(String expression) throws GrammarException {
         tokenizer.init(expression);
         return parseLevel(0, 0);
     }
 
-    private CommonExpression parseLevel(int level, int brackets) throws GrammarException {
+    private TripleExpression parseLevel(int level, int brackets) throws GrammarException {
         if (level == grammar.size()) {
             return parseFactor(brackets);
         } else {
-            CommonExpression result = parseLevel(level + 1, brackets);
+            TripleExpression result = parseLevel(level + 1, brackets);
             while (grammar.isOnLevel(level, tokenizer.getToken())) {
                 Token operation = tokenizer.getToken();
                 tokenizer.nextToken(true);
                 result = operation.apply(result, parseLevel(level + 1, brackets));
             }
             if (tokenizer.getToken() == Tokenizer.ERROR) {
-                throw new GrammarException("Unknown token", tokenizer.getPosition());
+                throw new GrammarException("Unknown token '" + tokenizer.getDescription() + "'", tokenizer.getPosition());
             }
             if (!tokenizer.getToken().isUnary() && !tokenizer.getToken().isBinary() &&
                     !(tokenizer.getToken() == Tokenizer.EXPRESSION_END) &&
                     !("RIGHT_BRACKET".equals(tokenizer.getToken().getName()) && brackets > 0)) {
-                throw new GrammarException("Incorrect token, operation expected", tokenizer.getPosition());
+                throw new GrammarException("Invalid token '" + tokenizer.getDescription() + "' got, operation expected",
+                        tokenizer.getPosition());
             }
             return result;
         }
     }
 
-    private CommonExpression parseFactor(int brackets) throws GrammarException {
+    private TripleExpression parseFactor(int brackets) throws GrammarException {
         if (tokenizer.getToken().isUnary()) {
             Token operation = tokenizer.getToken();
             tokenizer.nextToken(false);
@@ -87,51 +91,36 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    private CommonExpression parseAtom(int brackets) throws GrammarException {
-        CommonExpression result;
+    private TripleExpression parseAtom(int brackets) throws GrammarException {
+        TripleExpression result;
         Token atom = tokenizer.getToken();
+        String tokenValue = tokenizer.getCustomWord();
         tokenizer.nextToken(true);
 
         if (atom == Tokenizer.CONSTANT) {
             try {
-                result = new Const(Integer.parseInt(tokenizer.getCustomWord()));
+                result = new Const<>(Integer.parseInt(tokenValue));
             } catch (NumberFormatException e) {
-                throw new GrammarException("Too large constant ".concat(tokenizer.getCustomWord()), tokenizer.getPosition());
+                throw new GrammarException("Too large constant string '" + tokenizer.getCustomWord() + "'", tokenizer.getPosition());
             }
         } else if (atom == Tokenizer.VARIABLE) {
-            String name = tokenizer.getCustomWord();
-            if (!"x".equals(name) && !"y".equals(name) && !"z".equals(name)) {
-                throw new UnsupportedVariableNameException(name, tokenizer.getPosition());
+            if (!"x".equals(tokenValue) && !"y".equals(tokenValue) && !"z".equals(tokenValue)) {
+                throw new UnsupportedVariableNameException(tokenValue, tokenizer.getPosition());
             }
-            result = new Variable(tokenizer.getCustomWord());
+            result = new Variable<>(tokenizer.getCustomWord());
         } else if ("LEFT_BRACKET".equals(atom.getName())) {
+            if ("RIGHT_BRACKET".equals(tokenizer.getToken().getName())) {
+                throw new GrammarException("Empty expression in parenthesis", tokenizer.getPosition());
+            }
             result = parseLevel(0, brackets + 1);
             if (!"RIGHT_BRACKET".equals(tokenizer.getToken().getName())) {
-                throw new GrammarException("Right bracket expected", tokenizer.getPosition());
+                throw new GrammarException("Closing parenthesis expected", tokenizer.getPosition());
             }
             tokenizer.nextToken(true);
         } else {
-            throw new GrammarException("Unknown token", tokenizer.getPosition());
+            throw new GrammarException("Unexpected token '" + tokenizer.getDescription() + "'", tokenizer.getPosition());
         }
         return result;
     }
-
-    /*
-    <full>              <- <expression> (<bit sign> <expression>)*
-    <expression>        <- <or expression> ("|" <or expression>)*
-    <or expression>     <- <xor expression> ("^" <xor expression>)*
-    <xor expression>    <- <and expression> ("&" <and expression>)*
-    <and_expression>    <- <term> (<term sign> <term>)*
-    <term>              <- <signed factor> (<factor sign> <signed factor>)*
-    <signed factor>     <- <unary sign>*<factor>
-    <factor>            <- <constant> | <variable> | "("<full>")"
-    <constant>          <- ("-") "0" | ["1"-"9"]["0"-"9"]*
-    <variable>          <- "x" | "y" | "z"
-
-    <unary sign>        <- "-" | "abs" | "square"
-    <term sign>         <- "+" | "-"
-    <factor sign>       <- "*" | "/" | "mod"
-    <bit sign>          <- "<<" | ">>"
-    */
 
 }

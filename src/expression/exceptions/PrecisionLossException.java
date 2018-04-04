@@ -7,9 +7,9 @@ package expression.exceptions;
  * @time 17:10
  */
 
-public class DoublePrecisionLossException extends EvaluationException {
+public class PrecisionLossException extends EvaluationException {
 
-    public DoublePrecisionLossException() {
+    public PrecisionLossException() {
         super();
     }
 }

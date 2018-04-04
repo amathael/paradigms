@@ -104,6 +104,7 @@ public class Tokenizer {
                 readWord();
             } else {
                 curToken = ERROR;
+                customWord = "" + input.charAt(index);
             }
         }
     }
@@ -114,6 +115,10 @@ public class Tokenizer {
 
     public String getCustomWord() {
         return customWord;
+    }
+
+    public String getDescription() {
+        return curToken == ERROR ? customWord : curToken.getName();
     }
 
 }

@@ -1,8 +1,7 @@
 package expression.parser;
 
 import expression.BaseTest;
-import expression.CommonExpression;
-import expression.TripleExpression;
+import expression.elements.TripleExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,7 +102,7 @@ public class ParserTest extends BaseTest {
                 ops(expression.length());
             }
             counter.nextTest();
-            final CommonExpression result = parser.parse(expression);
+            final TripleExpression result = parser.parse(expression);
             counter.passed();
             return result;
         } catch (final Exception e) {
@@ -129,7 +128,7 @@ public class ParserTest extends BaseTest {
         }
     }
 
-    private void check(final int[] vars, final TripleExpression expression, final expression.parser.Either<Reason, Integer> answer) {
+    private void check(final int[] vars, final TripleExpression<Integer> expression, final expression.parser.Either<Reason, Integer> answer) {
         counter.nextTest();
         op();
         try {

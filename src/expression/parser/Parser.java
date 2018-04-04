@@ -1,6 +1,6 @@
 package expression.parser;
 
-import expression.CommonExpression;
+import expression.elements.TripleExpression;
 import expression.exceptions.GrammarException;
 
 /**
@@ -12,6 +12,6 @@ import expression.exceptions.GrammarException;
 
 public interface Parser {
 
-    public CommonExpression parse(String expression) throws GrammarException;
+    public TripleExpression parse(String expression) throws GrammarException;
 
 }

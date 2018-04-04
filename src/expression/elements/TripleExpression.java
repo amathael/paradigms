@@ -1,4 +1,4 @@
-package expression;
+package expression.elements;
 
 import expression.exceptions.EvaluationException;
 
@@ -9,8 +9,8 @@ import expression.exceptions.EvaluationException;
  * @time 15:29
  */
 
-public interface TripleExpression {
+public interface TripleExpression<T> {
 
-    public int evaluate(int x, int y, int z) throws EvaluationException;
+    public T evaluate(T x, T y, T z) throws EvaluationException;
 
 }

@@ -1,6 +1,7 @@
 package expression.parser;
-import com.sun.org.apache.xpath.internal.operations.Mod;
-import expression.*;
+import expression.calc.Calculator;
+import expression.calc.IntegerCalculator;
+import expression.elements.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -14,6 +15,8 @@ import java.util.HashSet;
 
 @Deprecated
 public class SimpleParser implements Parser {
+
+    Calculator<Integer> calc = new IntegerCalculator();
 
     public enum Token {
         ERROR,
@@ -58,7 +61,7 @@ public class SimpleParser implements Parser {
     }
 
     @Override
-    public CommonExpression parse(String expression) {
+    public TripleExpression parse(String expression) {
         assert expression != null : "Expression expected, null received";
         tokenizer = new Tokenizer(expression);
         return parseFullExpression();
@@ -160,49 +163,49 @@ public class SimpleParser implements Parser {
 
     private Tokenizer tokenizer;
 
-    private CommonExpression parseFullExpression() {
+    private TripleExpression parseFullExpression() {
         return parseOrExpression();
     }
 
-    private CommonExpression parseOrExpression() {
-        CommonExpression result = parseXorExpression();
+    private TripleExpression parseOrExpression() {
+        TripleExpression result = parseXorExpression();
         while (tokenizer.curToken == Token.VSLASH) {
             tokenizer.nextToken();
-            result = new CheckedBitwiseOr(result, parseXorExpression());
+            result = new CheckedBitwiseOr(result, parseXorExpression(), calc);
         }
         return result;
     }
 
-    private CommonExpression parseXorExpression() {
-        CommonExpression result = parseAndExpression();
+    private TripleExpression parseXorExpression() {
+        TripleExpression result = parseAndExpression();
         while (tokenizer.curToken == Token.CIRCUMFLEX) {
             tokenizer.nextToken();
-            result = new CheckedBitwiseXor(result, parseAndExpression());
+            result = new CheckedBitwiseXor(result, parseAndExpression(), calc);
         }
         return result;
     }
 
-    private CommonExpression parseAndExpression() {
-        CommonExpression result = parseExpression();
+    private TripleExpression parseAndExpression() {
+        TripleExpression result = parseExpression();
         while (tokenizer.curToken == Token.AMPERSAND) {
             tokenizer.nextToken();
-            result = new CheckedBitwiseAnd(result, parseExpression());
+            result = new CheckedBitwiseAnd(result, parseExpression(), calc);
         }
         return result;
     }
 
-    private CommonExpression parseExpression() {
-        CommonExpression result = parseTerm();
+    private TripleExpression parseExpression() {
+        TripleExpression result = parseTerm();
         while (tokenizer.curToken != Token.EXPRESSION_END && tokenizer.curToken != Token.RIGHT_BRACKET
                 && term_operations.contains(tokenizer.curToken)) {
             Token op = tokenizer.curToken;
             tokenizer.nextToken();
             switch (op) {
                 case PLUS:
-                    result = new CheckedAdd(result, parseTerm());
+                    result = new CheckedAdd(result, parseTerm(), calc);
                     break;
                 case MINUS:
-                    result = new CheckedSubtract(result, parseTerm());
+                    result = new CheckedSubtract(result, parseTerm(), calc);
                     break;
                 default:
                     result = null;
@@ -211,18 +214,18 @@ public class SimpleParser implements Parser {
         return result;
     }
 
-    private CommonExpression parseTerm() {
-        CommonExpression result = parseSignedFactor();
+    private TripleExpression parseTerm() {
+        TripleExpression result = parseSignedFactor();
         while (tokenizer.curToken != Token.EXPRESSION_END && tokenizer.curToken != Token.RIGHT_BRACKET
                 && factor_operations.contains(tokenizer.curToken)) {
             Token op = tokenizer.curToken;
             tokenizer.nextToken();
             switch (op) {
                 case ASTERISK:
-                    result = new CheckedMultiply(result, parseSignedFactor());
+                    result = new CheckedMultiply(result, parseSignedFactor(), calc);
                     break;
                 case SLASH:
-                    result = new CheckedDivide(result, parseSignedFactor());
+                    result = new CheckedDivide(result, parseSignedFactor(), calc);
                     break;
                 default:
                     result = null;
@@ -231,17 +234,17 @@ public class SimpleParser implements Parser {
         return result;
     }
 
-    private CommonExpression parseSignedFactor() {
+    private TripleExpression parseSignedFactor() {
         if (unary_operations.contains(tokenizer.curToken)) {
             Token op = tokenizer.curToken;
             tokenizer.nextToken();
             switch (op) {
                 case MINUS:
-                    return new CheckedNegate(parseSignedFactor());
+                    return new CheckedNegate(parseSignedFactor(), calc);
                 case COUNT:
-                    return new CheckedBitCount(parseSignedFactor());
+                    return new CheckedBitCount(parseSignedFactor(), calc);
                 case TILDE:
-                    return new CheckedBitwiseNegate(parseSignedFactor());
+                    return new CheckedBitwiseNegate(parseSignedFactor(), calc);
                 default:
                     return null;
             }
@@ -250,8 +253,8 @@ public class SimpleParser implements Parser {
         }
     }
 
-    private CommonExpression parseFactor() {
-        CommonExpression result;
+    private TripleExpression parseFactor() {
+        TripleExpression result;
         Token op = tokenizer.curToken;
         tokenizer.nextToken();
         switch (op) {
@@ -271,23 +274,5 @@ public class SimpleParser implements Parser {
         }
         return result;
     }
-
-    /*
-    <full>          <- <expression> (<bit sign> <expression>)*
-    <expression>    <- <or term> ("|" <or term>)*
-    <or term>       <- <xor term> ("^" <xor term>)*
-    <xor term>      <- <and_term> ("&" <and term>)*
-    <and_term>      <- <term> (<term sign> <term>)*
-    <term>          <- <signed factor> (<factor sign> <signed factor>)*
-    <signed factor> <- <unary sign>*<factor>
-    <factor>        <- <constant> | <variable> | "("<full>")"
-    <constant>      <- ("-") "0" | ["1"-"9"]["0"-"9"]*
-    <variable>      <- "x" | "y" | "z"
-
-    <unary sign>    <- "-" | "abs" | "square"
-    <term sign>     <- "+" | "-"
-    <factor sign>   <- "*" | "/" | "mod"
-    <bit sign>      <- "<<" | ">>"
-    */
 
 }

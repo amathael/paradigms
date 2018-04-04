@@ -11,7 +11,7 @@ package expression.exceptions;
 public class GrammarException extends Exception {
 
     public GrammarException(String msg, int position) {
-        super(msg.concat(" before position ").concat(String.valueOf(position)));
+        super(msg + " on position " + String.valueOf(position));
     }
 
 }

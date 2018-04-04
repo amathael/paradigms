@@ -1,8 +1,8 @@
 package expression.parser.grammar;
 
-import expression.AbstractBinaryOperation;
-import expression.CommonExpression;
-import expression.AbstractUnaryOperation;
+import expression.elements.AbstractBinaryOperation;
+import expression.elements.TripleExpression;
+import expression.elements.AbstractUnaryOperation;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -40,19 +40,19 @@ public class Token {
         return name;
     }
 
-    public CommonExpression apply(CommonExpression left, CommonExpression right) {
+    public TripleExpression apply(TripleExpression left, TripleExpression right) {
         assert binaryOperation != null : "No binary operation for this token";
         try {
-            return binaryOperation.getDeclaredConstructor(CommonExpression.class, CommonExpression.class).newInstance(left, right);
+            return binaryOperation.getDeclaredConstructor(TripleExpression.class, TripleExpression.class).newInstance(left, right);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new NotImplementedException();
         }
     }
 
-    public CommonExpression apply(CommonExpression value) {
+    public TripleExpression apply(TripleExpression value) {
         assert unaryOperation != null : "No unary operation for this token";
         try {
-            return unaryOperation.getDeclaredConstructor(CommonExpression.class).newInstance(value);
+            return unaryOperation.getDeclaredConstructor(TripleExpression.class).newInstance(value);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new NotImplementedException();
         }

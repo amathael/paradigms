@@ -1,4 +1,4 @@
-package expression;
+package expression.elements;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -7,8 +7,7 @@ package expression;
  * @time 11:01
  */
 
-@SuppressWarnings("FieldCanBeLocal")
-public class Variable implements CommonExpression {
+public class Variable<T> implements TripleExpression<T> {
 
     private final String name;
 
@@ -17,17 +16,7 @@ public class Variable implements CommonExpression {
     }
 
     @Override
-    public int evaluate(int variable) {
-        return variable;
-    }
-
-    @Override
-    public double evaluate(double variable) {
-        return variable;
-    }
-
-    @Override
-    public int evaluate(int x, int y, int z) {
+    public T evaluate(T x, T y, T z) {
         if ("x".equals(name)) {
             return x;
         } else if ("y".equals(name)) {
@@ -36,4 +25,5 @@ public class Variable implements CommonExpression {
             return z;
         }
     }
+
 }

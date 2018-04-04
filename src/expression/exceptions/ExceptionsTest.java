@@ -1,6 +1,8 @@
 package expression.exceptions;
 
-import expression.*;
+import expression.calc.Calculator;
+import expression.calc.IntegerCalculator;
+import expression.elements.*;
 import expression.parser.Either;
 import expression.parser.ExpressionParser;
 import expression.parser.Parser;
@@ -19,6 +21,7 @@ public class ExceptionsTest extends ParserTest {
     private final static int D = 5;
     private final static List<Integer> OVERFLOW_VALUES = new ArrayList<>();
     private final char[] CHARS = "AZ+-*%()[]<>".toCharArray();
+    private final Calculator<Integer> calc = new IntegerCalculator();
 
     public static final Variable VX = new Variable("x");
     public static final Variable VY = new Variable("y");
@@ -66,14 +69,14 @@ public class ExceptionsTest extends ParserTest {
     }
 
     protected void testOverflow() {
-        testOverflow((a, b) -> a + b, "+", new CheckedAdd(VX, VY));
-        testOverflow((a, b) -> a - b, "-", new CheckedSubtract(VX, VY));
-        testOverflow((a, b) -> a * b, "*", new CheckedMultiply(VX, VY));
-        testOverflow((a, b) -> b == 0 ? Long.MAX_VALUE : a / b, "/", new CheckedDivide(VX, VY));
-        testOverflow((a, b) -> -b, "<- ignore first argument, unary -", new CheckedNegate(VY));
+        testOverflow((a, b) -> a + b, "+", new CheckedAdd<Integer>(VX, VY, calc));
+        testOverflow((a, b) -> a - b, "-", new CheckedSubtract<Integer>(VX, VY, calc));
+        testOverflow((a, b) -> a * b, "*", new CheckedMultiply<Integer>(VX, VY, calc));
+        testOverflow((a, b) -> b == 0 ? Long.MAX_VALUE : a / b, "/", new CheckedDivide<Integer>(VX, VY, calc));
+        testOverflow((a, b) -> -b, "<- ignore first argument, unary -", new CheckedNegate<Integer>(VY, calc));
     }
 
-    protected void testOverflow(final LongBinaryOperator f, final String op, final TripleExpression expression) {
+    protected void testOverflow(final LongBinaryOperator f, final String op, final TripleExpression<Integer> expression) {
         for (final int a : OVERFLOW_VALUES) {
             for (final int b : OVERFLOW_VALUES) {
                 final long expected = f.applyAsLong(a, b);
