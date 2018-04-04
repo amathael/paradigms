@@ -18,7 +18,7 @@ public class CheckedLog10<T> extends AbstractUnaryOperation<T> {
 
     @Override
     protected T eval(T value) throws EvaluationException {
-        return calc.pow(value, calc.valueOf(10));
+        return calc.log(value, calc.valueOf(10));
     }
 
 }

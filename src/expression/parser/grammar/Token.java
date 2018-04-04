@@ -1,8 +1,10 @@
 package expression.parser.grammar;
 
+import expression.calc.Calculator;
+import expression.calc.IntegerCalculator;
 import expression.elements.AbstractBinaryOperation;
-import expression.elements.TripleExpression;
 import expression.elements.AbstractUnaryOperation;
+import expression.elements.TripleExpression;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -19,6 +21,7 @@ import java.util.Objects;
 public class Token {
 
     private String name;
+    private Calculator<Integer> calc = new IntegerCalculator();
 
     private Class<? extends AbstractBinaryOperation> binaryOperation;
 
@@ -43,7 +46,8 @@ public class Token {
     public TripleExpression apply(TripleExpression left, TripleExpression right) {
         assert binaryOperation != null : "No binary operation for this token";
         try {
-            return binaryOperation.getDeclaredConstructor(TripleExpression.class, TripleExpression.class).newInstance(left, right);
+            return binaryOperation.getDeclaredConstructor(TripleExpression.class, TripleExpression.class,
+                    Calculator.class).newInstance(left, right, calc);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             throw new NotImplementedException();
         }
@@ -52,7 +56,7 @@ public class Token {
     public TripleExpression apply(TripleExpression value) {
         assert unaryOperation != null : "No unary operation for this token";
         try {
-            return unaryOperation.getDeclaredConstructor(TripleExpression.class).newInstance(value);
+            return unaryOperation.getDeclaredConstructor(TripleExpression.class, Calculator.class).newInstance(value, calc);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new NotImplementedException();
         }
