@@ -6,19 +6,19 @@ import expression.exceptions.IllegalArgumentException;
 /**
  * Created by isuca in paradigms catalogue
  *
- * @date 02-Apr-18
- * @time 13:56
+ * @date 05-Apr-18
+ * @time 13:43
  */
 
-public class IntegerCalculator implements Calculator<Integer> {
-
+public class ByteCalculator implements Calculator<Byte> {
+    
     private final boolean OVERFLOW_IGNORE;
 
-    public IntegerCalculator() {
+    public ByteCalculator() {
         OVERFLOW_IGNORE = false;
     }
 
-    public IntegerCalculator(boolean overflowIgnore) {
+    public ByteCalculator(boolean overflowIgnore) {
         OVERFLOW_IGNORE = overflowIgnore;
     }
 
@@ -30,88 +30,88 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
-    public Integer parseString(String string) throws NumberParsingException {
+    public Byte parseString(String string) throws NumberParsingException {
         try {
-            return Integer.parseInt(string);
+            return Byte.parseByte(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Integer from %s", string));
+            throw new NumberParsingException(String.format("Can't parse Byte from %s", string));
         }
     }
 
     @Override
-    public Integer add(Integer left, Integer right) throws EvaluationException {
-        if (left > 0 && Integer.MAX_VALUE - left < right || left < 0 && Integer.MIN_VALUE - left > right) {
+    public Byte add(Byte left, Byte right) throws EvaluationException {
+        if (left > 0 && Byte.MAX_VALUE - left < right || left < 0 && Byte.MIN_VALUE - left > right) {
             throwOverflowException(new OverflowException());
         }
-        return left + right;
+        return (byte) (left + right);
     }
 
     @Override
-    public Integer sub(Integer left, Integer right) throws EvaluationException {
-        if (left >= 0 && left - Integer.MAX_VALUE > right || left < 0 && left - Integer.MIN_VALUE < right) {
+    public Byte sub(Byte left, Byte right) throws EvaluationException {
+        if (left >= 0 && left - Byte.MAX_VALUE > right || left < 0 && left - Byte.MIN_VALUE < right) {
             throwOverflowException(new OverflowException());
         }
-        return left - right;
+        return (byte) (left - right);
     }
 
     @Override
-    public Integer neg(Integer value) throws EvaluationException {
-        if (value == Integer.MIN_VALUE) {
+    public Byte neg(Byte value) throws EvaluationException {
+        if (value == Byte.MIN_VALUE) {
             throwOverflowException(new OverflowException());
         }
-        return -value;
+        return (byte) -value;
     }
 
     @Override
-    public Integer mul(Integer left, Integer right) throws EvaluationException {
-        int limit = left > 0 == right > 0 ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    public Byte mul(Byte left, Byte right) throws EvaluationException {
+        int limit = left > 0 == right > 0 ? Byte.MAX_VALUE : Byte.MIN_VALUE;
         if (left < 0 && right < 0 && limit / left > right ||
                 left < 0 && right > 0 && limit / right > left ||
                 left > 0 && right < 0 && limit / left > right ||
                 left > 0 && right > 0 && limit / right < left) {
             throwOverflowException(new OverflowException());
         }
-        return left * right;
+        return (byte) (left * right);
     }
 
     @Override
-    public Integer div(Integer left, Integer right) throws EvaluationException {
+    public Byte div(Byte left, Byte right) throws EvaluationException {
         if (right == 0) {
             throwOverflowException(new DivisionByZeroException());
         }
-        if (left == Integer.MIN_VALUE && right == -1) {
+        if (left == Byte.MIN_VALUE && right == -1) {
             throwOverflowException(new OverflowException());
         }
-        return left / right;
+        return (byte) (left / right);
     }
 
     @Override
-    public Integer bitCount(Integer value) {
-        return Integer.bitCount(value);
+    public Byte bitCount(Byte value) {
+        return (byte) Integer.bitCount(value);
     }
 
     @Override
-    public Integer not(Integer value) {
-        return ~value;
+    public Byte not(Byte value) {
+        return (byte) ~value;
     }
 
     @Override
-    public Integer and(Integer left, Integer right) {
-        return left & right;
+    public Byte and(Byte left, Byte right) {
+        return (byte) (left & right);
     }
 
     @Override
-    public Integer or(Integer left, Integer right) {
-        return left | right;
+    public Byte or(Byte left, Byte right) {
+        return (byte) (left | right);
     }
 
     @Override
-    public Integer xor(Integer left, Integer right) {
-        return left ^ right;
+    public Byte xor(Byte left, Byte right) {
+        return (byte) (left ^ right);
     }
 
     @Override
-    public Integer log(Integer left, Integer right) throws EvaluationException {
+    public Byte log(Byte left, Byte right) throws EvaluationException {
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %d is non-positive", left));
         } else if (right <= 1) {
@@ -122,7 +122,7 @@ public class IntegerCalculator implements Calculator<Integer> {
             int m = (l + r) / 2;
             boolean greater;
             try {
-                greater = pow(right, m) > left;
+                greater = pow(right, (byte) m) > left;
             } catch (OverflowException e) {
                 greater = true;
             }
@@ -132,13 +132,13 @@ public class IntegerCalculator implements Calculator<Integer> {
                 l = m;
             }
         }
-        return l;
+        return (byte) l;
     }
 
     @Override
-    public Integer pow(Integer left, Integer right) throws EvaluationException {
+    public Byte pow(Byte left, Byte right) throws EvaluationException {
         if (right < 0) {
-            throw new IllegalArgumentException(String.format("Negative power base %d is invalid in integers", right));
+            throw new IllegalArgumentException(String.format("Negative power base %d is invalid in bytes", right));
         } else if (right == 0) {
             if (left == 0) {
                 throw new IllegalArgumentException("Zero in zero degree is not a determined value");
@@ -149,12 +149,12 @@ public class IntegerCalculator implements Calculator<Integer> {
             return left;
         } else {
             if (right % 2 == 1) {
-                return mul(pow(left, right - 1), left);
+                return mul(pow(left, (byte) (right - 1)), left);
             } else {
-                int half = pow(left, right / 2);
+                byte half = pow(left, (byte) (right / 2));
                 return mul(half, half);
             }
         }
     }
-
+    
 }

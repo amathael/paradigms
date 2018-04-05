@@ -13,7 +13,6 @@ import java.util.function.Function;
  * @time 07:25
  */
 
-@SuppressWarnings("WeakerAccess")
 public class Token<T> {
 
     private String name;
