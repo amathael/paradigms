@@ -1,8 +1,9 @@
 package expression.calc;
 
+import expression.exceptions.DivisionByZeroException;
 import expression.exceptions.EvaluationException;
 import expression.exceptions.IllegalArgumentException;
-import expression.exceptions.NumberConversionException;
+import expression.exceptions.NumberParsingException;
 
 import java.math.BigInteger;
 
@@ -18,11 +19,11 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     private BigInteger TWO = BigInteger.valueOf(2);
 
     @Override
-    public BigInteger parseString(String string) throws NumberConversionException {
+    public BigInteger parseString(String string) throws NumberParsingException {
         try {
             return new BigInteger(string);
         } catch (NumberFormatException e) {
-            throw new NumberConversionException(String.format("Can't parse BigInteger from %s", string));
+            throw new NumberParsingException(String.format("Can't parse BigInteger from %s", string));
         }
     }
 
@@ -64,6 +65,9 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     @Override
     public BigInteger div(BigInteger left, BigInteger right) throws EvaluationException {
         checkNull(left, right);
+        if (right.equals(BigInteger.ZERO)) {
+            throwOverflowException(new DivisionByZeroException());
+        }
         return left.divide(right);
     }
 

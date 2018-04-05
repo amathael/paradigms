@@ -7,9 +7,9 @@ package expression.exceptions;
  * @time 15:50
  */
 
-public class NumberConversionException extends EvaluationException {
+public class NumberParsingException extends EvaluationException {
 
-    public NumberConversionException(String reason) {
+    public NumberParsingException(String reason) {
         super(reason);
     }
 

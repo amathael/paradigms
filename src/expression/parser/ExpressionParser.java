@@ -8,7 +8,7 @@ import expression.elements.unary.CheckedLog10;
 import expression.elements.unary.CheckedNegate;
 import expression.elements.unary.CheckedPower10;
 import expression.exceptions.GrammarException;
-import expression.exceptions.NumberConversionException;
+import expression.exceptions.NumberParsingException;
 import expression.exceptions.UnsupportedVariableNameException;
 import expression.parser.grammar.*;
 
@@ -73,12 +73,12 @@ public class ExpressionParser<T> implements Parser {
     }
 
     @Override
-    public TripleExpression<T> parse(String expression) throws GrammarException, NumberConversionException {
+    public TripleExpression<T> parse(String expression) throws GrammarException, NumberParsingException {
         tokenizer.init(expression);
         return parseLevel(0, 0);
     }
 
-    private TripleExpression<T> parseLevel(int level, int brackets) throws GrammarException, NumberConversionException {
+    private TripleExpression<T> parseLevel(int level, int brackets) throws GrammarException, NumberParsingException {
         if (level == grammar.size()) {
             return parseFactor(brackets);
         } else {
@@ -101,7 +101,7 @@ public class ExpressionParser<T> implements Parser {
         }
     }
 
-    private TripleExpression<T> parseFactor(int brackets) throws GrammarException, NumberConversionException {
+    private TripleExpression<T> parseFactor(int brackets) throws GrammarException, NumberParsingException {
         if (tokenizer.getToken().isUnary()) {
             Token<T> operation = tokenizer.getToken();
             tokenizer.nextToken(false);
@@ -111,7 +111,7 @@ public class ExpressionParser<T> implements Parser {
         }
     }
 
-    private TripleExpression<T> parseAtom(int brackets) throws GrammarException, NumberConversionException {
+    private TripleExpression<T> parseAtom(int brackets) throws GrammarException, NumberParsingException {
         TripleExpression<T> result;
         Token atom = tokenizer.getToken();
         String tokenValue = tokenizer.getCustomWord();

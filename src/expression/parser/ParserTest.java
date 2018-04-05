@@ -1,6 +1,7 @@
 package expression.parser;
 
 import expression.BaseTest;
+import expression.calc.IntegerCalculator;
 import expression.elements.TripleExpression;
 
 import java.util.ArrayList;
@@ -94,7 +95,7 @@ public class ParserTest extends BaseTest {
     protected TripleExpression parse(final String expression, final boolean reparse) {
         ops(expression.length());
         try {
-            final ExpressionParser parser = new ExpressionParser();
+            final ExpressionParser parser = new ExpressionParser<>(new IntegerCalculator());
             if (reparse) {
                 counter.nextTest();
                 parser.parse(expression);

@@ -3,8 +3,6 @@ package expression.calc;
 import expression.exceptions.*;
 import expression.exceptions.IllegalArgumentException;
 
-import java.util.HashSet;
-
 /**
  * Created by isuca in paradigms catalogue
  *
@@ -15,18 +13,18 @@ import java.util.HashSet;
 public class IntegerCalculator implements Calculator<Integer> {
 
     @Override
-    public Integer parseString(String string) throws NumberConversionException {
+    public Integer parseString(String string) throws NumberParsingException {
         try {
             return Integer.parseInt(string);
         } catch (NumberFormatException e) {
-            throw new NumberConversionException(String.format("Can't parse Integer from %s", string));
+            throw new NumberParsingException(String.format("Can't parse Integer from %s", string));
         }
     }
 
     @Override
     public Integer add(Integer left, Integer right) throws EvaluationException {
         if (left > 0 && Integer.MAX_VALUE - left < right || left < 0 && Integer.MIN_VALUE - left > right) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left + right;
     }
@@ -34,7 +32,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer sub(Integer left, Integer right) throws EvaluationException {
         if (left >= 0 && left - Integer.MAX_VALUE > right || left < 0 && left - Integer.MIN_VALUE < right) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left - right;
     }
@@ -42,7 +40,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer neg(Integer value) throws EvaluationException {
         if (value == Integer.MIN_VALUE) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return -value;
     }
@@ -54,7 +52,7 @@ public class IntegerCalculator implements Calculator<Integer> {
                 left < 0 && right > 0 && limit / right > left ||
                 left > 0 && right < 0 && limit / left > right ||
                 left > 0 && right > 0 && limit / right < left) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left * right;
     }
@@ -65,7 +63,7 @@ public class IntegerCalculator implements Calculator<Integer> {
             throw new DivisionByZeroException();
         }
         if (left == Integer.MIN_VALUE && right == -1) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left / right;
     }

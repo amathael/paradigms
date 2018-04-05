@@ -1,8 +1,6 @@
 package expression.calc;
 
-import expression.exceptions.EvaluationException;
-import expression.exceptions.NumberConversionException;
-import expression.exceptions.OperationUnsupportedException;
+import expression.exceptions.*;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -13,9 +11,17 @@ import expression.exceptions.OperationUnsupportedException;
 
 public interface Calculator<T> {
 
-    T parseString(String string) throws NumberConversionException;
+    default void throwOverflowException(OverflowException exception) throws OverflowException {
+        throw exception;
+    }
 
-    default <P> T valueOf(P value) throws NumberConversionException {
+    default void throwPrecisionLossException() throws PrecisionLossException {
+        throw new PrecisionLossException();
+    }
+
+    T parseString(String string) throws NumberParsingException;
+
+    default <P> T valueOf(P value) throws NumberParsingException {
         return parseString(String.valueOf(value));
     }
 
@@ -35,7 +41,9 @@ public interface Calculator<T> {
 
     default T not(T value) throws EvaluationException {
         throw new OperationUnsupportedException("in " + this.getClass().getSimpleName());
-    };
+    }
+
+    ;
 
     default T and(T left, T right) throws EvaluationException {
         throw new OperationUnsupportedException("in " + this.getClass().getSimpleName());

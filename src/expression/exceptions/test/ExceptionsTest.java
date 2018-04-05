@@ -1,4 +1,4 @@
-package expression.exceptions;
+package expression.exceptions.test;
 
 import expression.calc.Calculator;
 import expression.calc.IntegerCalculator;

@@ -10,25 +10,41 @@ import expression.exceptions.IllegalArgumentException;
  * @time 15:35
  */
 
-public abstract class DoubleCalculator implements Calculator<Double> {
+public class DoubleCalculator implements Calculator<Double> {
 
     private final double eps = Double.MIN_VALUE;
-    private final boolean PRECISION_LOSS_IGNORE;
+    private final boolean OVERFLOW_IGNORE, PRECISION_LOSS_IGNORE;
 
     public DoubleCalculator() {
-        PRECISION_LOSS_IGNORE = false;
+        OVERFLOW_IGNORE = true;
+        PRECISION_LOSS_IGNORE = true;
     }
 
-    public DoubleCalculator(boolean PRECISION_LOSS_IGNORE) {
-        this.PRECISION_LOSS_IGNORE = PRECISION_LOSS_IGNORE;
+    public DoubleCalculator(boolean overflowIgnore, boolean precisionLossIgnore) {
+        OVERFLOW_IGNORE = overflowIgnore;
+        PRECISION_LOSS_IGNORE = precisionLossIgnore;
     }
 
     @Override
-    public Double parseString(String string) throws NumberConversionException {
+    public void throwOverflowException(OverflowException exception) throws OverflowException {
+        if (!OVERFLOW_IGNORE) {
+            throw exception;
+        }
+    }
+
+    @Override
+    public void throwPrecisionLossException() throws PrecisionLossException {
+        if (!PRECISION_LOSS_IGNORE) {
+            throw new PrecisionLossException();
+        }
+    }
+
+    @Override
+    public Double parseString(String string) throws NumberParsingException {
         try {
             return Double.parseDouble(string);
         } catch (NumberFormatException e) {
-            throw new NumberConversionException(String.format("Can't parse Double form %s", string));
+            throw new NumberParsingException(String.format("Can't parse Double form %s", string));
         }
     }
 
@@ -47,7 +63,7 @@ public abstract class DoubleCalculator implements Calculator<Double> {
     public Double add(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         if (left > 0 && Double.MAX_VALUE - left < right || left < 0 && -Double.MAX_VALUE - left > right) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left + right;
     }
@@ -56,7 +72,7 @@ public abstract class DoubleCalculator implements Calculator<Double> {
     public Double sub(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         if (left > 0 && left - Double.MAX_VALUE > right || left < 0 && left + Double.MAX_VALUE < right) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left - right;
     }
@@ -71,11 +87,11 @@ public abstract class DoubleCalculator implements Calculator<Double> {
     public Double mul(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         double absLeft = left >= 0 ? left : -left, absRight = right > 0 ? right : -right;
-        if (absRight < 1 && Double.MIN_VALUE / absRight > absLeft && !PRECISION_LOSS_IGNORE) {
-            throw new PrecisionLossException();
+        if (absRight < 1 && Double.MIN_VALUE / absRight > absLeft) {
+            throwPrecisionLossException();
         }
         if (absRight > 1 && Double.MAX_VALUE / absRight < absLeft) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
         return left * right;
     }
@@ -84,14 +100,14 @@ public abstract class DoubleCalculator implements Calculator<Double> {
     public Double div(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         if (right == 0) {
-            throw new DivisionByZeroException();
+            throwOverflowException(new DivisionByZeroException());
         }
         double absLeft = left >= 0 ? left : -left, absRight = right > 0 ? right : -right;
         if (absRight < 1 && Double.MAX_VALUE * absRight < absLeft) {
-            throw new OverflowException();
+            throwOverflowException(new OverflowException());
         }
-        if (absRight > 1 && Double.MIN_VALUE * absRight < absLeft && !PRECISION_LOSS_IGNORE) {
-            throw new PrecisionLossException();
+        if (absRight > 1 && Double.MIN_VALUE * absRight < absLeft) {
+            throwPrecisionLossException();
         }
         return left / right;
     }
