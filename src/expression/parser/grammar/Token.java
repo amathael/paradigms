@@ -1,14 +1,10 @@
 package expression.parser.grammar;
 
-import expression.calc.Calculator;
-import expression.calc.IntegerCalculator;
-import expression.elements.AbstractBinaryOperation;
-import expression.elements.AbstractUnaryOperation;
 import expression.elements.TripleExpression;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -18,14 +14,12 @@ import java.util.Objects;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class Token {
+public class Token<T> {
 
     private String name;
-    private Calculator<Integer> calc = new IntegerCalculator();
 
-    private Class<? extends AbstractBinaryOperation> binaryOperation;
-
-    private Class<? extends AbstractUnaryOperation> unaryOperation;
+    private BiFunction<TripleExpression<T>, TripleExpression<T>, TripleExpression<T>> binaryOperation;
+    private Function<TripleExpression<T>, TripleExpression<T>> unaryOperation;
 
     public Token(String name) {
         this.name = name;
@@ -33,7 +27,9 @@ public class Token {
         unaryOperation = null;
     }
 
-    public Token(String name, Class<? extends AbstractBinaryOperation> binaryOperation, Class<? extends AbstractUnaryOperation> unaryOperation) {
+    public Token(String name,
+                 BiFunction<TripleExpression<T>, TripleExpression<T>, TripleExpression<T>> binaryOperation,
+                 Function<TripleExpression<T>, TripleExpression<T>> unaryOperation) {
         this.name = name;
         this.binaryOperation = binaryOperation;
         this.unaryOperation = unaryOperation;
@@ -43,23 +39,14 @@ public class Token {
         return name;
     }
 
-    public TripleExpression apply(TripleExpression left, TripleExpression right) {
+    public TripleExpression<T> apply(TripleExpression<T> left, TripleExpression<T> right) {
         assert binaryOperation != null : "No binary operation for this token";
-        try {
-            return binaryOperation.getDeclaredConstructor(TripleExpression.class, TripleExpression.class,
-                    Calculator.class).newInstance(left, right, calc);
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            throw new NotImplementedException();
-        }
+        return binaryOperation.apply(left, right);
     }
 
-    public TripleExpression apply(TripleExpression value) {
+    public TripleExpression<T> apply(TripleExpression<T> arg) {
         assert unaryOperation != null : "No unary operation for this token";
-        try {
-            return unaryOperation.getDeclaredConstructor(TripleExpression.class, Calculator.class).newInstance(value, calc);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new NotImplementedException();
-        }
+        return unaryOperation.apply(arg);
     }
 
     public boolean isBinary() {

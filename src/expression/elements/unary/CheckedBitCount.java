@@ -1,6 +1,7 @@
-package expression.elements;
+package expression.elements.unary;
 
 import expression.calc.Calculator;
+import expression.elements.TripleExpression;
 import expression.exceptions.EvaluationException;
 
 /**
@@ -16,6 +17,7 @@ public class CheckedBitCount<T> extends AbstractUnaryOperation<T> {
         super(argument, calc);
     }
 
+    @Override
     protected T eval(T value) throws EvaluationException {
         return calc.bitCount(value);
     }

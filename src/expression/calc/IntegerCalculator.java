@@ -15,11 +15,11 @@ import java.util.HashSet;
 public class IntegerCalculator implements Calculator<Integer> {
 
     @Override
-    public <P> Integer valueOf(P value) throws NumberConversionException {
+    public Integer parseString(String string) throws NumberConversionException {
         try {
-            return Integer.valueOf(String.valueOf(value));
-        } catch (ClassCastException | NumberFormatException e) {
-            throw new NumberConversionException("Cannot cast " + String.valueOf(value) + " to Integer");
+            return Integer.parseInt(string);
+        } catch (NumberFormatException e) {
+            throw new NumberConversionException(String.format("Can't parse Integer from %s", string));
         }
     }
 
@@ -105,7 +105,7 @@ public class IntegerCalculator implements Calculator<Integer> {
         int l = 0, r = 32;
         while (r - l > 1) {
             int m = (l + r) / 2;
-            boolean greater = false;
+            boolean greater;
             try {
                 greater = pow(right, m) > left;
             } catch (OverflowException e) {

@@ -1,7 +1,11 @@
-package expression.elements;
+package expression.elements.unary;
 
+import base.Triple;
 import expression.calc.Calculator;
+import expression.elements.TripleExpression;
 import expression.exceptions.EvaluationException;
+
+import java.util.function.Function;
 
 /**
  * Created by isuca in paradigms catalogue

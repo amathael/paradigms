@@ -1,5 +1,7 @@
 package expression.parser.grammar;
 
+import expression.exceptions.InputNumberFormatException;
+
 import java.util.HashMap;
 
 /**
@@ -10,21 +12,21 @@ import java.util.HashMap;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class Tokenizer {
+public class Tokenizer<T> {
 
-    private HashMap<String, Token> tokens;
-    public static final Token
-            CONSTANT = new Token("CONST"),
-            VARIABLE = new Token("VARIABLE"),
-            EXPRESSION_END = new Token("EXPRESSION_END"),
-            ERROR = new Token("ERROR");
+    private HashMap<String, Token<T>> tokens;
+    public final Token<T>
+            CONSTANT = new Token<>("CONST"),
+            VARIABLE = new Token<>("VARIABLE"),
+            EXPRESSION_END = new Token<>("EXPRESSION_END"),
+            ERROR = new Token<>("ERROR");
 
     private static final boolean ALLOW_LEADING_ZEROES = true;
 
     private Trie trie;
     private String input;
     private int index;
-    private Token curToken;
+    private Token<T> curToken;
 
     private String customWord;
 
@@ -33,19 +35,19 @@ public class Tokenizer {
         trie = new Trie();
     }
 
-    public void init(String input) {
+    public void init(String input) throws InputNumberFormatException {
         this.input = input;
         index = 0;
         curToken = null;
         nextToken(false);
     }
 
-    public void addToken(String value, Token token) {
+    public void addToken(String value, Token<T> token) {
         tokens.put(value, token);
         trie.add(value);
     }
 
-    public Token getToken() {
+    public Token<T> getToken() {
         return curToken;
     }
 
@@ -55,19 +57,32 @@ public class Tokenizer {
         }
     }
 
-    private void readNumber(boolean negative) {
+    private void readNumber(boolean negative) throws InputNumberFormatException {
+        boolean point = false;
         StringBuilder sb = new StringBuilder();
         if (negative) {
             sb.append("-");
         }
         int start = index;
         boolean startsWithNull = input.charAt(index) == '0';
-        while (index < input.length() && Character.isDigit(input.charAt(index))) {
+        while (index < input.length() && (Character.isDigit(input.charAt(index)) || input.charAt(index) == '.')) {
+            if (input.charAt(index) == '.') {
+                if (point) {
+                    throw new InputNumberFormatException("Second dot got while parsing number", index);
+                }
+                point = true;
+            }
             sb.append(input.charAt(index));
             index++;
         }
         //noinspection ConstantConditions
-        curToken = startsWithNull && index > start + 1 && !Tokenizer.ALLOW_LEADING_ZEROES ? ERROR : CONSTANT;
+        if (startsWithNull && index > start + 1 && !Tokenizer.ALLOW_LEADING_ZEROES) {
+            throw new InputNumberFormatException("Number with leading zero given", start);
+        }
+        if (point && sb.charAt(sb.length() - 1) == '.') {
+            throw new InputNumberFormatException("Number ending with '.' given", start);
+        }
+        curToken = CONSTANT;
         customWord = sb.toString();
     }
 
@@ -82,7 +97,7 @@ public class Tokenizer {
         customWord = sb.toString();
     }
 
-    public void nextToken(boolean ignoreNegative) {
+    public void nextToken(boolean ignoreNegative) throws InputNumberFormatException {
         skipSpaces();
         if (index == input.length()) {
             curToken = EXPRESSION_END;

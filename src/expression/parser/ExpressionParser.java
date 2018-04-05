@@ -1,9 +1,14 @@
 package expression.parser;
 
 import expression.calc.Calculator;
-import expression.calc.IntegerCalculator;
 import expression.elements.*;
+import expression.elements.binary.*;
+import expression.elements.unary.CheckedBitCount;
+import expression.elements.unary.CheckedLog10;
+import expression.elements.unary.CheckedNegate;
+import expression.elements.unary.CheckedPower10;
 import expression.exceptions.GrammarException;
+import expression.exceptions.NumberConversionException;
 import expression.exceptions.UnsupportedVariableNameException;
 import expression.parser.grammar.*;
 
@@ -15,64 +20,79 @@ import expression.parser.grammar.*;
  */
 
 @SuppressWarnings("WeakerAccess")
-public class ExpressionParser implements Parser {
+public class ExpressionParser<T> implements Parser {
 
-    private Tokenizer tokenizer;
+    private Tokenizer<T> tokenizer;
     private ExpressionGrammar grammar;
-    Calculator calc = new IntegerCalculator();
+    private Calculator<T> calc;
 
-    public ExpressionParser() {
-        tokenizer = new Tokenizer();
+    public ExpressionParser(Calculator<T> calc) {
+        tokenizer = new Tokenizer<>();
         grammar = new ExpressionGrammar();
+        this.calc = calc;
 
-        tokenizer.addToken("(", new Token("LEFT_BRACKET"));
-        tokenizer.addToken(")", new Token("RIGHT_BRACKET"));
+        tokenizer.addToken("(", new Token<>("LEFT_BRACKET"));
+        tokenizer.addToken(")", new Token<>("RIGHT_BRACKET"));
 
-        initToken("|", new Token("VSLASH", CheckedBitwiseOr.class, null), 0);
-        initToken("^", new Token("CIRCUMFLEX", CheckedBitwiseXor.class, null), 1);
-        initToken("&", new Token("AMPERSAND", CheckedBitwiseAnd.class, null), 2);
+        initToken("|", new Token<>("VSLASH",
+                (left, right) -> new CheckedBitwiseOr<>(left, right, calc), null), 0);
+        initToken("^", new Token<>("CIRCUMFLEX",
+                (left, right) -> new CheckedBitwiseXor<>(left, right, calc), null), 1);
+        initToken("&", new Token<>("AMPERSAND",
+                (left, right) -> new CheckedBitwiseAnd<>(left, right, calc), null), 2);
 
-        initToken("-", new Token("MINUS", CheckedSubtract.class, CheckedNegate.class), 3);
-        initToken("+", new Token("PLUS", CheckedAdd.class, null), 3);
+        initToken("-", new Token<>("MINUS",
+                (left, right) -> new CheckedSubtract<>(left, right, calc),
+                arg -> new CheckedNegate<>(arg, calc)), 3);
+        initToken("+", new Token<>("PLUS",
+                (left, right) -> new CheckedAdd<>(left, right, calc), null), 3);
 
-        initToken("/", new Token("SLASH", CheckedDivide.class, null), 4);
-        initToken("*", new Token("ASTERISK", CheckedMultiply.class, null), 4);
+        initToken("/", new Token<>("SLASH",
+                (left, right) -> new CheckedDivide<>(left, right, calc), null), 4);
+        initToken("*", new Token<>("ASTERISK",
+                (left, right) -> new CheckedMultiply<>(left, right, calc), null), 4);
 
-        initToken("**", new Token("POWER", CheckedPower.class, null), 5);
-        initToken("//", new Token("LOG", CheckedLog.class, null), 5);
+        initToken("**", new Token<>("POWER",
+                (left, right) -> new CheckedPower<>(left, right, calc), null), 5);
+        initToken("//", new Token<>("LOG",
+                (left, right) -> new CheckedLog<>(left, right, calc), null), 5);
 
-        tokenizer.addToken("~", new Token("TILDE", null, CheckedBitwiseNegate.class));
-        tokenizer.addToken("count", new Token("COUNT", null, CheckedBitCount.class));
-        tokenizer.addToken("log10", new Token("LOG10", null, CheckedLog10.class));
-        tokenizer.addToken("pow10", new Token("POW10", null, CheckedPower10.class));
+        tokenizer.addToken("~", new Token<>("TILDE",
+                null, arg -> new CheckedBitwiseNegate<>(arg, calc)));
+        tokenizer.addToken("count", new Token<>("COUNT",
+                null, arg -> new CheckedBitCount<>(arg, calc)));
+        tokenizer.addToken("log10", new Token<>("LOG10",
+                null, arg -> new CheckedLog10<>(arg, calc)));
+        tokenizer.addToken("pow10", new Token<>("POW10",
+                null, arg -> new CheckedPower10<>(arg, calc)));
     }
 
-    public void initToken(String value, Token token, int level) {
+    public void initToken(String value, Token<T> token, int level) {
         tokenizer.addToken(value, token);
         grammar.addOnLevel(level, token);
     }
 
     @Override
-    public TripleExpression parse(String expression) throws GrammarException {
+    public TripleExpression<T> parse(String expression) throws GrammarException, NumberConversionException {
         tokenizer.init(expression);
         return parseLevel(0, 0);
     }
 
-    private TripleExpression parseLevel(int level, int brackets) throws GrammarException {
+    private TripleExpression<T> parseLevel(int level, int brackets) throws GrammarException, NumberConversionException {
         if (level == grammar.size()) {
             return parseFactor(brackets);
         } else {
-            TripleExpression result = parseLevel(level + 1, brackets);
+            TripleExpression<T> result = parseLevel(level + 1, brackets);
             while (grammar.isOnLevel(level, tokenizer.getToken())) {
-                Token operation = tokenizer.getToken();
+                Token<T> operation = tokenizer.getToken();
                 tokenizer.nextToken(true);
                 result = operation.apply(result, parseLevel(level + 1, brackets));
             }
-            if (tokenizer.getToken() == Tokenizer.ERROR) {
+            if (tokenizer.getToken() == tokenizer.ERROR) {
                 throw new GrammarException("Unknown token '" + tokenizer.getDescription() + "'", tokenizer.getPosition());
             }
             if (!tokenizer.getToken().isUnary() && !tokenizer.getToken().isBinary() &&
-                    !(tokenizer.getToken() == Tokenizer.EXPRESSION_END) &&
+                    !(tokenizer.getToken() == tokenizer.EXPRESSION_END) &&
                     !("RIGHT_BRACKET".equals(tokenizer.getToken().getName()) && brackets > 0)) {
                 throw new GrammarException("Invalid token '" + tokenizer.getDescription() + "' got, operation expected",
                         tokenizer.getPosition());
@@ -81,9 +101,9 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    private TripleExpression parseFactor(int brackets) throws GrammarException {
+    private TripleExpression<T> parseFactor(int brackets) throws GrammarException, NumberConversionException {
         if (tokenizer.getToken().isUnary()) {
-            Token operation = tokenizer.getToken();
+            Token<T> operation = tokenizer.getToken();
             tokenizer.nextToken(false);
             return operation.apply(parseFactor(brackets));
         } else {
@@ -91,19 +111,15 @@ public class ExpressionParser implements Parser {
         }
     }
 
-    private TripleExpression parseAtom(int brackets) throws GrammarException {
-        TripleExpression result;
+    private TripleExpression<T> parseAtom(int brackets) throws GrammarException, NumberConversionException {
+        TripleExpression<T> result;
         Token atom = tokenizer.getToken();
         String tokenValue = tokenizer.getCustomWord();
         tokenizer.nextToken(true);
 
-        if (atom == Tokenizer.CONSTANT) {
-            try {
-                result = new Const<>(Integer.parseInt(tokenValue));
-            } catch (NumberFormatException e) {
-                throw new GrammarException("Too large constant string '" + tokenizer.getCustomWord() + "'", tokenizer.getPosition());
-            }
-        } else if (atom == Tokenizer.VARIABLE) {
+        if (atom == tokenizer.CONSTANT) {
+            result = new Const<>(calc.parseString(tokenValue));
+        } else if (atom == tokenizer.VARIABLE) {
             if (!"x".equals(tokenValue) && !"y".equals(tokenValue) && !"z".equals(tokenValue)) {
                 throw new UnsupportedVariableNameException(tokenValue, tokenizer.getPosition());
             }

@@ -10,21 +10,25 @@ import expression.exceptions.IllegalArgumentException;
  * @time 15:35
  */
 
-public class DoubleCalculator implements Calculator<Double> {
+public abstract class DoubleCalculator implements Calculator<Double> {
 
     private final double eps = Double.MIN_VALUE;
-    private boolean PRECISION_LOSS_IGNORE = false;
+    private final boolean PRECISION_LOSS_IGNORE;
+
+    public DoubleCalculator() {
+        PRECISION_LOSS_IGNORE = false;
+    }
 
     public DoubleCalculator(boolean PRECISION_LOSS_IGNORE) {
         this.PRECISION_LOSS_IGNORE = PRECISION_LOSS_IGNORE;
     }
 
     @Override
-    public <P> Double valueOf(P value) throws NumberConversionException {
+    public Double parseString(String string) throws NumberConversionException {
         try {
-            return Double.valueOf(String.valueOf(value));
-        } catch (ClassCastException | NumberFormatException e) {
-            throw new NumberConversionException("Cannot cast " + String.valueOf(value) + " to Double");
+            return Double.parseDouble(string);
+        } catch (NumberFormatException e) {
+            throw new NumberConversionException(String.format("Can't parse Double form %s", string));
         }
     }
 
@@ -95,6 +99,7 @@ public class DoubleCalculator implements Calculator<Double> {
     @Override
     @Deprecated
     public Double log(Double left, Double right) throws EvaluationException {
+        checkNaN(left, right);
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %f is negative", left));
         } else if (right < 0) {
@@ -102,36 +107,13 @@ public class DoubleCalculator implements Calculator<Double> {
         } else if (right == 1) {
             throw new IllegalArgumentException("Log with base 1 is not a determined value");
         }
-        boolean negate = false;
-        if (right < 1) {
-            negate = true;
-            right = 1 / right;
-        }
-        if (left < 1) {
-            negate = !negate;
-            left = 1 / left;
-        }
-        double l = 0, r = Double.MAX_VALUE;
-        while (r - l > eps) {
-            double m = (l + r) / 2;
-            boolean greater = false;
-            try {
-                greater = pow(right, m) > left;
-            } catch (OverflowException e) {
-                greater = true;
-            }
-            if (greater) {
-                r = m;
-            } else {
-                l = m;
-            }
-        }
-        return negate ? l : -l;
+        return Math.log(left) / Math.log(right);
     }
 
     @Override
     @Deprecated
     public Double pow(Double left, Double right) throws EvaluationException {
+        checkNaN(left, right);
         if (left < 0) {
             throw new IllegalArgumentException(String.format("Negative power base %f is incorrect in non-integers", left));
         }

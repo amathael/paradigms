@@ -13,7 +13,11 @@ import expression.exceptions.OperationUnsupportedException;
 
 public interface Calculator<T> {
 
-    <P> T valueOf(P value) throws NumberConversionException;
+    T parseString(String string) throws NumberConversionException;
+
+    default <P> T valueOf(P value) throws NumberConversionException {
+        return parseString(String.valueOf(value));
+    }
 
     T add(T left, T right) throws EvaluationException;
 

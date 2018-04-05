@@ -2,6 +2,7 @@ package expression.parser;
 
 import expression.elements.TripleExpression;
 import expression.exceptions.GrammarException;
+import expression.exceptions.NumberConversionException;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -12,6 +13,6 @@ import expression.exceptions.GrammarException;
 
 public interface Parser {
 
-    public TripleExpression parse(String expression) throws GrammarException;
+    TripleExpression parse(String expression) throws GrammarException, NumberConversionException;
 
 }

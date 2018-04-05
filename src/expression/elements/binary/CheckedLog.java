@@ -1,9 +1,8 @@
-package expression.elements;
+package expression.elements.binary;
 
 import expression.calc.Calculator;
-import expression.exceptions.OperationUnsupportedException;
+import expression.elements.TripleExpression;
 import expression.exceptions.EvaluationException;
-import expression.exceptions.IllegalArgumentException;
 
 /**
  * Created by isuca in paradigms catalogue
@@ -12,7 +11,6 @@ import expression.exceptions.IllegalArgumentException;
  * @time 10:35
  */
 
-@SuppressWarnings("WeakerAccess")
 public class CheckedLog<T> extends AbstractBinaryOperation<T> {
 
     public CheckedLog(TripleExpression<T> left, TripleExpression<T> right, Calculator<T> calc) {

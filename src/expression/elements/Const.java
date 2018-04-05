@@ -1,7 +1,5 @@
 package expression.elements;
 
-import expression.exceptions.EvaluationException;
-
 /**
  * Created by isuca in paradigms catalogue
  *

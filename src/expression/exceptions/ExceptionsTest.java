@@ -3,6 +3,11 @@ package expression.exceptions;
 import expression.calc.Calculator;
 import expression.calc.IntegerCalculator;
 import expression.elements.*;
+import expression.elements.binary.CheckedAdd;
+import expression.elements.binary.CheckedDivide;
+import expression.elements.binary.CheckedMultiply;
+import expression.elements.binary.CheckedSubtract;
+import expression.elements.unary.CheckedNegate;
 import expression.parser.Either;
 import expression.parser.ExpressionParser;
 import expression.parser.Parser;
@@ -60,7 +65,7 @@ public class ExceptionsTest extends ParserTest {
     private void testParsingErrors() {
         for (final Op<String> op : parsingTest) {
             try {
-                new ExpressionParser().parse(op.f);
+                new ExpressionParser<>(new IntegerCalculator()).parse(op.f);
                 assert false : "Successfully parsed " + op.f;
             } catch (final Exception e) {
                 System.out.format("%-30s %s%n", op.name, e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -100,7 +105,7 @@ public class ExceptionsTest extends ParserTest {
     }
 
     protected TripleExpression parse(final String expression, final boolean reparse) {
-        final Parser parser = new ExpressionParser();
+        final Parser parser = new ExpressionParser<>(new IntegerCalculator());
         if (expression.length() > 10) {
             loop: for (final char ch : CHARS) {
                 for (int i = 0; i < 10; i++) {

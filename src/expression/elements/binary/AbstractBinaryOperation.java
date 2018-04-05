@@ -1,7 +1,10 @@
-package expression.elements;
+package expression.elements.binary;
 
 import expression.calc.Calculator;
+import expression.elements.TripleExpression;
 import expression.exceptions.EvaluationException;
+
+import java.util.function.BiFunction;
 
 /**
  * Created by isuca in paradigms catalogue

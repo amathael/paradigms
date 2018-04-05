@@ -1,10 +1,8 @@
-package expression.elements;
+package expression.elements.binary;
 
 import expression.calc.Calculator;
-import expression.exceptions.DivisionByZeroException;
-import expression.exceptions.PrecisionLossException;
+import expression.elements.TripleExpression;
 import expression.exceptions.EvaluationException;
-import expression.exceptions.OverflowException;
 
 /**
  * Created by isuca in paradigms catalogue
