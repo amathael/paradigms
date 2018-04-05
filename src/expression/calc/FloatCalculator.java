@@ -13,29 +13,20 @@ import expression.exceptions.IllegalArgumentException;
 public class FloatCalculator implements Calculator<Float> {
 
     private final Float eps = Float.MIN_VALUE;
-    private final boolean OVERFLOW_IGNORE, PRECISION_LOSS_IGNORE;
+    private final boolean EXCEPTION_IGNORE;
 
     public FloatCalculator() {
-        OVERFLOW_IGNORE = true;
-        PRECISION_LOSS_IGNORE = true;
+        EXCEPTION_IGNORE = true;
     }
 
     public FloatCalculator(boolean overflowIgnore, boolean precisionLossIgnore) {
-        OVERFLOW_IGNORE = overflowIgnore;
-        PRECISION_LOSS_IGNORE = precisionLossIgnore;
+        EXCEPTION_IGNORE = overflowIgnore;
     }
 
     @Override
-    public void throwOverflowException(OverflowException exception) throws OverflowException {
-        if (!OVERFLOW_IGNORE) {
-            throw exception;
-        }
-    }
-
-    @Override
-    public void throwPrecisionLossException() throws PrecisionLossException {
-        if (!PRECISION_LOSS_IGNORE) {
-            throw new PrecisionLossException();
+    public void throwEvaluationException(EvaluationException e) throws EvaluationException {
+        if (!EXCEPTION_IGNORE) {
+            throw e;
         }
     }
 
@@ -63,7 +54,7 @@ public class FloatCalculator implements Calculator<Float> {
     public Float add(Float left, Float right) throws EvaluationException {
         checkNaN(left, right);
         if (left > 0 && Float.MAX_VALUE - left < right || left < 0 && -Float.MAX_VALUE - left > right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left + right;
     }
@@ -72,7 +63,7 @@ public class FloatCalculator implements Calculator<Float> {
     public Float sub(Float left, Float right) throws EvaluationException {
         checkNaN(left, right);
         if (left > 0 && left - Float.MAX_VALUE > right || left < 0 && left + Float.MAX_VALUE < right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left - right;
     }
@@ -88,10 +79,10 @@ public class FloatCalculator implements Calculator<Float> {
         checkNaN(left, right);
         Float absLeft = left >= 0 ? left : -left, absRight = right > 0 ? right : -right;
         if (absRight < 1 && Float.MIN_VALUE / absRight > absLeft) {
-            throwPrecisionLossException();
+            throwEvaluationException(new PrecisionLossException());
         }
         if (absRight > 1 && Float.MAX_VALUE / absRight < absLeft) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left * right;
     }
@@ -100,14 +91,14 @@ public class FloatCalculator implements Calculator<Float> {
     public Float div(Float left, Float right) throws EvaluationException {
         checkNaN(left, right);
         if (right == 0) {
-            throwOverflowException(new DivisionByZeroException());
+            throwEvaluationException(new DivisionByZeroException());
         }
         Float absLeft = left >= 0 ? left : -left, absRight = right > 0 ? right : -right;
         if (absRight < 1 && Float.MAX_VALUE * absRight < absLeft) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         if (absRight > 1 && Float.MIN_VALUE * absRight < absLeft) {
-            throwPrecisionLossException();
+            throwEvaluationException(new PrecisionLossException());
         }
         return left / right;
     }
@@ -123,9 +114,9 @@ public class FloatCalculator implements Calculator<Float> {
         } else if (right == 1) {
             throw new expression.exceptions.IllegalArgumentException("Log with base 1 is not a determined value");
         }
-        double res = new DoubleCalculator(OVERFLOW_IGNORE, PRECISION_LOSS_IGNORE).pow((double) left, (double) right);
+        double res = new DoubleCalculator(EXCEPTION_IGNORE).pow((double) left, (double) right);
         if (res < -Float.MAX_VALUE || res > Float.MAX_VALUE) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (float) res;
     }
@@ -143,9 +134,9 @@ public class FloatCalculator implements Calculator<Float> {
             }
             return 0f;
         }
-        double res = new DoubleCalculator(OVERFLOW_IGNORE, PRECISION_LOSS_IGNORE).log((double) left, (double) right);
+        double res = new DoubleCalculator(EXCEPTION_IGNORE).log((double) left, (double) right);
         if (res < -Float.MAX_VALUE || res > Float.MAX_VALUE) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (float) res;
     }

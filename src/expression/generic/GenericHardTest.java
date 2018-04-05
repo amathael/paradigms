@@ -96,9 +96,9 @@ public class GenericHardTest extends GenericTest {
 
     protected void ifb(final String expression, final F<Integer> fi, final F<Float> ff, final F<Byte> fb) {
         tests.addAll(Arrays.asList(
-                op("u:" + expression, fi),
-                op("f:" + expression, ff),
-                op("b:" + expression, fb))
+                op("u: " + expression, fi),
+                op("f: " + expression, ff),
+                op("b: " + expression, fb))
         );
     }
 

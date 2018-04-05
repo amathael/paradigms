@@ -23,9 +23,9 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
-    public void throwOverflowException(OverflowException exception) throws OverflowException {
+    public void throwEvaluationException(EvaluationException e) throws EvaluationException {
         if (!OVERFLOW_IGNORE) {
-            throw exception;
+            throw e;
         }
     }
 
@@ -41,7 +41,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer add(Integer left, Integer right) throws EvaluationException {
         if (left > 0 && Integer.MAX_VALUE - left < right || left < 0 && Integer.MIN_VALUE - left > right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left + right;
     }
@@ -49,7 +49,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer sub(Integer left, Integer right) throws EvaluationException {
         if (left >= 0 && left - Integer.MAX_VALUE > right || left < 0 && left - Integer.MIN_VALUE < right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left - right;
     }
@@ -57,7 +57,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer neg(Integer value) throws EvaluationException {
         if (value == Integer.MIN_VALUE) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return -value;
     }
@@ -69,7 +69,7 @@ public class IntegerCalculator implements Calculator<Integer> {
                 left < 0 && right > 0 && limit / right > left ||
                 left > 0 && right < 0 && limit / left > right ||
                 left > 0 && right > 0 && limit / right < left) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left * right;
     }
@@ -77,10 +77,10 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer div(Integer left, Integer right) throws EvaluationException {
         if (right == 0) {
-            throwOverflowException(new DivisionByZeroException());
+            throwEvaluationException(new DivisionByZeroException());
         }
         if (left == Integer.MIN_VALUE && right == -1) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left / right;
     }

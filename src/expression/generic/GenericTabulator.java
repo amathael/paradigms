@@ -1,9 +1,6 @@
 package expression.generic;
 
-import expression.calc.BigIntegerCalculator;
-import expression.calc.Calculator;
-import expression.calc.DoubleCalculator;
-import expression.calc.IntegerCalculator;
+import expression.calc.*;
 import expression.elements.TripleExpression;
 import expression.exceptions.*;
 import expression.parser.ExpressionParser;
@@ -23,6 +20,9 @@ public class GenericTabulator implements Tabulator {
         put("i", new IntegerCalculator());
         put("d", new DoubleCalculator());
         put("bi", new BigIntegerCalculator());
+        put("u", new IntegerCalculator(true));
+        put("b", new ByteCalculator(true));
+        put("f", new FloatCalculator());
     }};
 
     private Calculator<?> getCalculator(String mode) throws UnknownModeException {

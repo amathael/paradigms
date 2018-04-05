@@ -66,7 +66,7 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     public BigInteger div(BigInteger left, BigInteger right) throws EvaluationException {
         checkNull(left, right);
         if (right.equals(BigInteger.ZERO)) {
-            throwOverflowException(new DivisionByZeroException());
+            throwEvaluationException(new DivisionByZeroException());
         }
         return left.divide(right);
     }

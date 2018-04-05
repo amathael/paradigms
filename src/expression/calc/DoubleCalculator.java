@@ -13,29 +13,20 @@ import expression.exceptions.IllegalArgumentException;
 public class DoubleCalculator implements Calculator<Double> {
 
     private final Double eps = Double.MIN_VALUE;
-    private final boolean OVERFLOW_IGNORE, PRECISION_LOSS_IGNORE;
+    private final boolean EXCEPTION_IGNORE;
 
     public DoubleCalculator() {
-        OVERFLOW_IGNORE = true;
-        PRECISION_LOSS_IGNORE = true;
+        EXCEPTION_IGNORE = true;
     }
 
-    public DoubleCalculator(boolean overflowIgnore, boolean precisionLossIgnore) {
-        OVERFLOW_IGNORE = overflowIgnore;
-        PRECISION_LOSS_IGNORE = precisionLossIgnore;
-    }
-
-    @Override
-    public void throwOverflowException(OverflowException exception) throws OverflowException {
-        if (!OVERFLOW_IGNORE) {
-            throw exception;
-        }
+    public DoubleCalculator(boolean exceptionIgnore) {
+        EXCEPTION_IGNORE = exceptionIgnore;
     }
 
     @Override
-    public void throwPrecisionLossException() throws PrecisionLossException {
-        if (!PRECISION_LOSS_IGNORE) {
-            throw new PrecisionLossException();
+    public void throwEvaluationException(EvaluationException e) throws EvaluationException {
+        if (!EXCEPTION_IGNORE) {
+            throw e;
         }
     }
 
@@ -63,7 +54,7 @@ public class DoubleCalculator implements Calculator<Double> {
     public Double add(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         if (left > 0 && Double.MAX_VALUE - left < right || left < 0 && -Double.MAX_VALUE - left > right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left + right;
     }
@@ -72,7 +63,7 @@ public class DoubleCalculator implements Calculator<Double> {
     public Double sub(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         if (left > 0 && left - Double.MAX_VALUE > right || left < 0 && left + Double.MAX_VALUE < right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left - right;
     }
@@ -88,10 +79,10 @@ public class DoubleCalculator implements Calculator<Double> {
         checkNaN(left, right);
         Double absLeft = left >= 0 ? left : -left, absRight = right > 0 ? right : -right;
         if (absRight < 1 && Double.MIN_VALUE / absRight > absLeft) {
-            throwPrecisionLossException();
+            throwEvaluationException(new PrecisionLossException());
         }
         if (absRight > 1 && Double.MAX_VALUE / absRight < absLeft) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return left * right;
     }
@@ -100,14 +91,14 @@ public class DoubleCalculator implements Calculator<Double> {
     public Double div(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);
         if (right == 0) {
-            throwOverflowException(new DivisionByZeroException());
+            throwEvaluationException(new DivisionByZeroException());
         }
         Double absLeft = left >= 0 ? left : -left, absRight = right > 0 ? right : -right;
         if (absRight < 1 && Double.MAX_VALUE * absRight < absLeft) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         if (absRight > 1 && Double.MIN_VALUE * absRight < absLeft) {
-            throwPrecisionLossException();
+            throwEvaluationException(new PrecisionLossException());
         }
         return left / right;
     }

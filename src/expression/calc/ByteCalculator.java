@@ -11,21 +11,21 @@ import expression.exceptions.IllegalArgumentException;
  */
 
 public class ByteCalculator implements Calculator<Byte> {
-    
-    private final boolean OVERFLOW_IGNORE;
+
+    private final boolean EXCEPTION_IGNORE;
 
     public ByteCalculator() {
-        OVERFLOW_IGNORE = false;
+        EXCEPTION_IGNORE = false;
     }
 
-    public ByteCalculator(boolean overflowIgnore) {
-        OVERFLOW_IGNORE = overflowIgnore;
+    public ByteCalculator(boolean exceptionIgnore) {
+        EXCEPTION_IGNORE = exceptionIgnore;
     }
 
     @Override
-    public void throwOverflowException(OverflowException exception) throws OverflowException {
-        if (!OVERFLOW_IGNORE) {
-            throw exception;
+    public void throwEvaluationException(EvaluationException e) throws EvaluationException {
+        if (!EXCEPTION_IGNORE) {
+            throw e;
         }
     }
 
@@ -41,7 +41,7 @@ public class ByteCalculator implements Calculator<Byte> {
     @Override
     public Byte add(Byte left, Byte right) throws EvaluationException {
         if (left > 0 && Byte.MAX_VALUE - left < right || left < 0 && Byte.MIN_VALUE - left > right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (byte) (left + right);
     }
@@ -49,7 +49,7 @@ public class ByteCalculator implements Calculator<Byte> {
     @Override
     public Byte sub(Byte left, Byte right) throws EvaluationException {
         if (left >= 0 && left - Byte.MAX_VALUE > right || left < 0 && left - Byte.MIN_VALUE < right) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (byte) (left - right);
     }
@@ -57,7 +57,7 @@ public class ByteCalculator implements Calculator<Byte> {
     @Override
     public Byte neg(Byte value) throws EvaluationException {
         if (value == Byte.MIN_VALUE) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (byte) -value;
     }
@@ -69,7 +69,7 @@ public class ByteCalculator implements Calculator<Byte> {
                 left < 0 && right > 0 && limit / right > left ||
                 left > 0 && right < 0 && limit / left > right ||
                 left > 0 && right > 0 && limit / right < left) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (byte) (left * right);
     }
@@ -77,10 +77,10 @@ public class ByteCalculator implements Calculator<Byte> {
     @Override
     public Byte div(Byte left, Byte right) throws EvaluationException {
         if (right == 0) {
-            throwOverflowException(new DivisionByZeroException());
+            throwEvaluationException(new DivisionByZeroException());
         }
         if (left == Byte.MIN_VALUE && right == -1) {
-            throwOverflowException(new OverflowException());
+            throwEvaluationException(new OverflowException());
         }
         return (byte) (left / right);
     }
@@ -156,5 +156,5 @@ public class ByteCalculator implements Calculator<Byte> {
             }
         }
     }
-    
+
 }

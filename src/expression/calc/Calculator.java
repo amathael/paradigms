@@ -11,12 +11,8 @@ import expression.exceptions.*;
 
 public interface Calculator<T> {
 
-    default void throwOverflowException(OverflowException exception) throws OverflowException {
-        throw exception;
-    }
-
-    default void throwPrecisionLossException() throws PrecisionLossException {
-        throw new PrecisionLossException();
+    default void throwEvaluationException(EvaluationException e) throws EvaluationException {
+        throw e;
     }
 
     T parseString(String string) throws NumberParsingException;
