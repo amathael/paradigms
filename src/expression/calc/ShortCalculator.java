@@ -34,7 +34,11 @@ public class ShortCalculator implements Calculator<Short> {
         try {
             return Short.parseShort(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Short from %s", string));
+            try {
+                return (short) Integer.parseInt(string);
+            } catch (NumberFormatException e2) {
+                throw new NumberParsingException(String.format("Can't parse Short or Integer from %s", string));
+            }
         }
     }
 
@@ -87,7 +91,7 @@ public class ShortCalculator implements Calculator<Short> {
     @Override
     public Short div(Short left, Short right) throws EvaluationException {
         if (right == 0) {
-            throwEvaluationException(new DivisionByZeroException());
+            throw new DivisionByZeroException();
         }
         if (left == Short.MIN_VALUE && right == -1) {
             throwEvaluationException(new OverflowException());
@@ -97,7 +101,7 @@ public class ShortCalculator implements Calculator<Short> {
 
     @Override
     public Short bitCount(Short value) {
-        return (short) Integer.bitCount((int) (short) value);
+        return (short) Integer.bitCount(Short.toUnsignedInt(value));
     }
 
     @Override
@@ -121,6 +125,7 @@ public class ShortCalculator implements Calculator<Short> {
     }
 
     @Override
+    @Deprecated
     public Short log(Short left, Short right) throws EvaluationException {
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %d is non-positive", left));
@@ -146,6 +151,7 @@ public class ShortCalculator implements Calculator<Short> {
     }
 
     @Override
+    @Deprecated
     public Short pow(Short left, Short right) throws EvaluationException {
         if (right < 0) {
             throw new IllegalArgumentException(String.format("Negative power base %d is invalid in integers", right));

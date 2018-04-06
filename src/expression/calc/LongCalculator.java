@@ -87,7 +87,7 @@ public class LongCalculator implements Calculator<Long> {
     @Override
     public Long div(Long left, Long right) throws EvaluationException {
         if (right == 0) {
-            throwEvaluationException(new DivisionByZeroException());
+            throw new DivisionByZeroException();
         }
         if (left == Long.MIN_VALUE && right == -1) {
             throwEvaluationException(new OverflowException());
@@ -121,6 +121,7 @@ public class LongCalculator implements Calculator<Long> {
     }
 
     @Override
+    @Deprecated
     public Long log(Long left, Long right) throws EvaluationException {
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %d is non-positive", left));
@@ -146,6 +147,7 @@ public class LongCalculator implements Calculator<Long> {
     }
 
     @Override
+    @Deprecated
     public Long pow(Long left, Long right) throws EvaluationException {
         if (right < 0) {
             throw new IllegalArgumentException(String.format("Negative power base %d is invalid in integers", right));

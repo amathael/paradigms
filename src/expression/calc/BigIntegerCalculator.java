@@ -76,7 +76,7 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     public BigInteger div(BigInteger left, BigInteger right) throws EvaluationException {
         checkNull(left, right);
         if (right.equals(BigInteger.ZERO)) {
-            throwEvaluationException(new DivisionByZeroException());
+            throw new DivisionByZeroException();
         }
         return left.divide(right);
     }
@@ -112,6 +112,7 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     }
 
     @Override
+    @Deprecated
     public BigInteger log(BigInteger left, BigInteger right) throws EvaluationException {
         checkNull(left, right);
         if (left.compareTo(BigInteger.ZERO) < 0) {
@@ -133,6 +134,7 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     }
 
     @Override
+    @Deprecated
     public BigInteger pow(BigInteger left, BigInteger right) throws EvaluationException {
         checkNull(left, right);
         if (right.equals(BigInteger.ZERO)) {

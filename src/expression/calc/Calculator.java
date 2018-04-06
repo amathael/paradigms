@@ -43,8 +43,6 @@ public interface Calculator<T> {
         throw new OperationUnsupportedException("in " + this.getClass().getSimpleName());
     }
 
-    ;
-
     default T and(T left, T right) throws EvaluationException {
         throw new OperationUnsupportedException("in " + this.getClass().getSimpleName());
     }
@@ -57,8 +55,10 @@ public interface Calculator<T> {
         throw new OperationUnsupportedException("in " + this.getClass().getSimpleName());
     }
 
+    @Deprecated
     T log(T left, T right) throws EvaluationException;
 
+    @Deprecated
     T pow(T left, T right) throws EvaluationException;
 
 }

@@ -114,6 +114,11 @@ public class DoubleCalculator implements Calculator<Double> {
     }
 
     @Override
+    public Double bitCount(Double value) {
+        return (double) Long.bitCount(Double.doubleToLongBits(value));
+    }
+
+    @Override
     @Deprecated
     public Double log(Double left, Double right) throws EvaluationException {
         checkNaN(left, right);

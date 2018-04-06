@@ -45,7 +45,7 @@ public class IntegerCalculator implements Calculator<Integer> {
 
     @Override
     public Integer max(Integer left, Integer right) {
-        return Math.min(left, right);
+        return Math.max(left, right);
     }
 
     @Override
@@ -87,7 +87,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     @Override
     public Integer div(Integer left, Integer right) throws EvaluationException {
         if (right == 0) {
-            throwEvaluationException(new DivisionByZeroException());
+            throw new DivisionByZeroException();
         }
         if (left == Integer.MIN_VALUE && right == -1) {
             throwEvaluationException(new OverflowException());
@@ -121,6 +121,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
+    @Deprecated
     public Integer log(Integer left, Integer right) throws EvaluationException {
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %d is non-positive", left));
@@ -146,6 +147,7 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
+    @Deprecated
     public Integer pow(Integer left, Integer right) throws EvaluationException {
         if (right < 0) {
             throw new IllegalArgumentException(String.format("Negative power base %d is invalid in integers", right));
