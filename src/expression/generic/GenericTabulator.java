@@ -49,12 +49,12 @@ public class GenericTabulator implements Tabulator {
         Calculator<?> calc = getCalculator(mode);
         try {
             return buildTable(calc, expression, x1, x2, y1, y2, z1, z2);
-        } catch (GrammarException e) {
+        } catch (GrammarException | EvaluationException e) {
             return null;
         }
     }
 
-    private <T> Object[][][] buildTable(Calculator<T> calc, String expression, int x1, int x2, int y1, int y2, int z1, int z2) throws NumberParsingException, GrammarException {
+    private <T> Object[][][] buildTable(Calculator<T> calc, String expression, int x1, int x2, int y1, int y2, int z1, int z2) throws EvaluationException, GrammarException {
         Object[][][] table = new Object[x2 - x1 + 1][y2 - y1 + 1][z2 - z1 + 1];
         TripleExpression<T> parsedExpression = new ExpressionParser<T>(calc).parse(expression);
 

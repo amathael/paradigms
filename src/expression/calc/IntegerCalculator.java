@@ -12,29 +12,30 @@ import expression.exceptions.IllegalArgumentException;
 
 public class IntegerCalculator implements Calculator<Integer> {
 
-    private final boolean OVERFLOW_IGNORE;
+    private final boolean EXCEPTION_IGNORE;
 
     public IntegerCalculator() {
-        OVERFLOW_IGNORE = false;
+        EXCEPTION_IGNORE = false;
     }
 
-    public IntegerCalculator(boolean overflowIgnore) {
-        OVERFLOW_IGNORE = overflowIgnore;
+    public IntegerCalculator(boolean exceptionIgnore) {
+        EXCEPTION_IGNORE = exceptionIgnore;
     }
 
     @Override
     public void throwEvaluationException(EvaluationException e) throws EvaluationException {
-        if (!OVERFLOW_IGNORE) {
+        if (!EXCEPTION_IGNORE) {
             throw e;
         }
     }
 
     @Override
-    public Integer parseString(String string) throws NumberParsingException {
+    public Integer parseString(String string) throws EvaluationException {
         try {
             return Integer.parseInt(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Integer from %s", string));
+            throwEvaluationException(new NumberParsingException(String.format("Can't parse Integer from %s", string)));
+            return 0;
         }
     }
 

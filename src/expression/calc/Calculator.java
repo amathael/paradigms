@@ -15,9 +15,9 @@ public interface Calculator<T> {
         throw e;
     }
 
-    T parseString(String string) throws NumberParsingException;
+    T parseString(String string) throws EvaluationException;
 
-    default <P> T valueOf(P value) throws NumberParsingException {
+    default <P> T valueOf(P value) throws EvaluationException {
         return parseString(String.valueOf(value));
     }
 

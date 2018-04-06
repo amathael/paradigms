@@ -1,6 +1,7 @@
 package expression.parser;
 
 import expression.elements.TripleExpression;
+import expression.exceptions.EvaluationException;
 import expression.exceptions.GrammarException;
 import expression.exceptions.NumberParsingException;
 
@@ -13,6 +14,6 @@ import expression.exceptions.NumberParsingException;
 
 public interface Parser {
 
-    TripleExpression parse(String expression) throws GrammarException, NumberParsingException;
+    TripleExpression parse(String expression) throws GrammarException, EvaluationException;
 
 }

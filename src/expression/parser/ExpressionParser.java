@@ -7,6 +7,7 @@ import expression.elements.unary.CheckedBitCount;
 import expression.elements.unary.CheckedLog10;
 import expression.elements.unary.CheckedNegate;
 import expression.elements.unary.CheckedPower10;
+import expression.exceptions.EvaluationException;
 import expression.exceptions.GrammarException;
 import expression.exceptions.NumberParsingException;
 import expression.exceptions.UnsupportedVariableNameException;
@@ -73,12 +74,12 @@ public class ExpressionParser<T> implements Parser {
     }
 
     @Override
-    public TripleExpression<T> parse(String expression) throws GrammarException, NumberParsingException {
+    public TripleExpression<T> parse(String expression) throws GrammarException, EvaluationException {
         tokenizer.init(expression);
         return parseLevel(0, 0);
     }
 
-    private TripleExpression<T> parseLevel(int level, int brackets) throws GrammarException, NumberParsingException {
+    private TripleExpression<T> parseLevel(int level, int brackets) throws GrammarException, EvaluationException {
         if (level == grammar.size()) {
             return parseFactor(brackets);
         } else {
@@ -101,7 +102,7 @@ public class ExpressionParser<T> implements Parser {
         }
     }
 
-    private TripleExpression<T> parseFactor(int brackets) throws GrammarException, NumberParsingException {
+    private TripleExpression<T> parseFactor(int brackets) throws GrammarException, EvaluationException {
         if (tokenizer.getToken().isUnary()) {
             Token<T> operation = tokenizer.getToken();
             tokenizer.nextToken(false);
@@ -111,7 +112,7 @@ public class ExpressionParser<T> implements Parser {
         }
     }
 
-    private TripleExpression<T> parseAtom(int brackets) throws GrammarException, NumberParsingException {
+    private TripleExpression<T> parseAtom(int brackets) throws GrammarException, EvaluationException {
         TripleExpression<T> result;
         Token atom = tokenizer.getToken();
         String tokenValue = tokenizer.getCustomWord();

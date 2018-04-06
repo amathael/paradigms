@@ -31,11 +31,12 @@ public class DoubleCalculator implements Calculator<Double> {
     }
 
     @Override
-    public Double parseString(String string) throws NumberParsingException {
+    public Double parseString(String string) throws EvaluationException {
         try {
             return Double.parseDouble(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Double form %s", string));
+            throwEvaluationException(new NumberParsingException(String.format("Can't parse Double form %s", string)));
+            return 0.0;
         }
     }
 

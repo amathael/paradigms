@@ -30,11 +30,12 @@ public class ByteCalculator implements Calculator<Byte> {
     }
 
     @Override
-    public Byte parseString(String string) throws NumberParsingException {
+    public Byte parseString(String string) throws EvaluationException {
         try {
             return Byte.parseByte(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Byte from %s", string));
+            return (byte) (int) (new IntegerCalculator(true).parseString(string));
+//            throwEvaluationException(new NumberParsingException(String.format("Can't parse Byte from %s", string)));
         }
     }
 

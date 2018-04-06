@@ -19,11 +19,12 @@ public class BigIntegerCalculator implements Calculator<BigInteger> {
     private BigInteger TWO = BigInteger.valueOf(2);
 
     @Override
-    public BigInteger parseString(String string) throws NumberParsingException {
+    public BigInteger parseString(String string) throws EvaluationException {
         try {
             return new BigInteger(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse BigInteger from %s", string));
+            throwEvaluationException(new NumberParsingException(String.format("Can't parse BigInteger from %s", string)));
+            return BigInteger.ZERO;
         }
     }
 

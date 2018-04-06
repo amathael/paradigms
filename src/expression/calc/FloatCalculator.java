@@ -19,7 +19,7 @@ public class FloatCalculator implements Calculator<Float> {
         EXCEPTION_IGNORE = true;
     }
 
-    public FloatCalculator(boolean overflowIgnore, boolean precisionLossIgnore) {
+    public FloatCalculator(boolean overflowIgnore) {
         EXCEPTION_IGNORE = overflowIgnore;
     }
 
@@ -31,11 +31,12 @@ public class FloatCalculator implements Calculator<Float> {
     }
 
     @Override
-    public Float parseString(String string) throws NumberParsingException {
+    public Float parseString(String string) throws EvaluationException {
         try {
             return Float.parseFloat(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Float form %s", string));
+            return (float) (double) (new DoubleCalculator(EXCEPTION_IGNORE).parseString(string));
+//            throwEvaluationException(new NumberParsingException(String.format("Can't parse Float form %s", string)));
         }
     }
 
