@@ -31,13 +31,22 @@ public class DoubleCalculator implements Calculator<Double> {
     }
 
     @Override
-    public Double parseString(String string) throws EvaluationException {
+    public Double parseString(String string) throws NumberParsingException {
         try {
             return Double.parseDouble(string);
         } catch (NumberFormatException e) {
-            throwEvaluationException(new NumberParsingException(String.format("Can't parse Double form %s", string)));
-            return 0.0;
+            throw new NumberParsingException(String.format("Can't parse Double form %s", string));
         }
+    }
+
+    @Override
+    public Double min(Double left, Double right) {
+        return Math.min(left, right);
+    }
+
+    @Override
+    public Double max(Double left, Double right) {
+        return Math.max(left, right);
     }
 
     private void checkNaN(Double value) throws IllegalArgumentException {

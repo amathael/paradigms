@@ -15,11 +15,15 @@ public interface Calculator<T> {
         throw e;
     }
 
-    T parseString(String string) throws EvaluationException;
+    T parseString(String string) throws NumberParsingException;
 
     default <P> T valueOf(P value) throws EvaluationException {
         return parseString(String.valueOf(value));
     }
+
+    T min(T left, T right);
+
+    T max(T left, T right);
 
     T add(T left, T right) throws EvaluationException;
 

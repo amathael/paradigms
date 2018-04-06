@@ -7,7 +7,7 @@ package expression.exceptions;
  * @time 15:19
  */
 
-public class DivisionByZeroException extends OverflowException {
+public class DivisionByZeroException extends EvaluationException {
 
     public DivisionByZeroException() {
         super();

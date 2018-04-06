@@ -6,19 +6,19 @@ import expression.exceptions.IllegalArgumentException;
 /**
  * Created by isuca in paradigms catalogue
  *
- * @date 05-Apr-18
- * @time 13:43
+ * @date 06-Apr-18
+ * @time 15:13
  */
 
-public class ByteCalculator implements Calculator<Byte> {
+public class ShortCalculator implements Calculator<Short> {
 
     private final boolean EXCEPTION_IGNORE;
 
-    public ByteCalculator() {
+    public ShortCalculator() {
         EXCEPTION_IGNORE = false;
     }
 
-    public ByteCalculator(boolean exceptionIgnore) {
+    public ShortCalculator(boolean exceptionIgnore) {
         EXCEPTION_IGNORE = exceptionIgnore;
     }
 
@@ -30,100 +30,109 @@ public class ByteCalculator implements Calculator<Byte> {
     }
 
     @Override
-    public Byte parseString(String string) throws EvaluationException {
+    public Short parseString(String string) throws NumberParsingException {
         try {
-            return Byte.parseByte(string);
+            return Short.parseShort(string);
         } catch (NumberFormatException e) {
-            return (byte) (int) (new IntegerCalculator(true).parseString(string));
-//            throwEvaluationException(new NumberParsingException(String.format("Can't parse Byte from %s", string)));
+            throw new NumberParsingException(String.format("Can't parse Short from %s", string));
         }
     }
 
     @Override
-    public Byte add(Byte left, Byte right) throws EvaluationException {
-        if (left > 0 && Byte.MAX_VALUE - left < right || left < 0 && Byte.MIN_VALUE - left > right) {
+    public Short min(Short left, Short right) {
+        return (short) Math.min(left, right);
+    }
+
+    @Override
+    public Short max(Short left, Short right) {
+        return (short) Math.max(left, right);
+    }
+
+    @Override
+    public Short add(Short left, Short right) throws EvaluationException {
+        if (left > 0 && Short.MAX_VALUE - left < right || left < 0 && Short.MIN_VALUE - left > right) {
             throwEvaluationException(new OverflowException());
         }
-        return (byte) (left + right);
+        return (short) (left + right);
     }
 
     @Override
-    public Byte sub(Byte left, Byte right) throws EvaluationException {
-        if (left >= 0 && left - Byte.MAX_VALUE > right || left < 0 && left - Byte.MIN_VALUE < right) {
+    public Short sub(Short left, Short right) throws EvaluationException {
+        if (left >= 0 && left - Short.MAX_VALUE > right || left < 0 && left - Short.MIN_VALUE < right) {
             throwEvaluationException(new OverflowException());
         }
-        return (byte) (left - right);
+        return (short) (left - right);
     }
 
     @Override
-    public Byte neg(Byte value) throws EvaluationException {
-        if (value == Byte.MIN_VALUE) {
+    public Short neg(Short value) throws EvaluationException {
+        if (value == Short.MIN_VALUE) {
             throwEvaluationException(new OverflowException());
         }
-        return (byte) -value;
+        return (short) -value;
     }
 
     @Override
-    public Byte mul(Byte left, Byte right) throws EvaluationException {
-        int limit = left > 0 == right > 0 ? Byte.MAX_VALUE : Byte.MIN_VALUE;
+    public Short mul(Short left, Short right) throws EvaluationException {
+        int limit = left > 0 == right > 0 ? Short.MAX_VALUE : Short.MIN_VALUE;
         if (left < 0 && right < 0 && limit / left > right ||
                 left < 0 && right > 0 && limit / right > left ||
                 left > 0 && right < 0 && limit / left > right ||
                 left > 0 && right > 0 && limit / right < left) {
             throwEvaluationException(new OverflowException());
         }
-        return (byte) (left * right);
+        return (short) (left * right);
     }
 
     @Override
-    public Byte div(Byte left, Byte right) throws EvaluationException {
+    public Short div(Short left, Short right) throws EvaluationException {
         if (right == 0) {
             throwEvaluationException(new DivisionByZeroException());
         }
-        if (left == Byte.MIN_VALUE && right == -1) {
+        if (left == Short.MIN_VALUE && right == -1) {
             throwEvaluationException(new OverflowException());
         }
-        return (byte) (left / right);
+        return (short) (left / right);
     }
 
     @Override
-    public Byte bitCount(Byte value) {
-        return (byte) Integer.bitCount(value);
+    public Short bitCount(Short value) {
+        return (short) Integer.bitCount((int) (short) value);
     }
 
     @Override
-    public Byte not(Byte value) {
-        return (byte) ~value;
+    public Short not(Short value) {
+        return (short) ~value;
     }
 
     @Override
-    public Byte and(Byte left, Byte right) {
-        return (byte) (left & right);
+    public Short and(Short left, Short right) {
+        return (short) (left & right);
     }
 
     @Override
-    public Byte or(Byte left, Byte right) {
-        return (byte) (left | right);
+    public Short or(Short left, Short right) {
+        return (short) (left | right);
     }
 
     @Override
-    public Byte xor(Byte left, Byte right) {
-        return (byte) (left ^ right);
+    public Short xor(Short left, Short right) {
+        return (short) (left ^ right);
     }
 
     @Override
-    public Byte log(Byte left, Byte right) throws EvaluationException {
+    public Short log(Short left, Short right) throws EvaluationException {
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %d is non-positive", left));
         } else if (right <= 1) {
             throw new IllegalArgumentException(String.format("Log base %d is lesser than 2", right));
         }
-        int l = 0, r = 32;
+        short l = 0, r = 16;
         while (r - l > 1) {
-            int m = (l + r) / 2;
+            short m = (short) ((l + r) / 2);
             boolean greater;
             try {
-                greater = pow(right, (byte) m) > left;
+                greater = pow(right, m) > left;
             } catch (OverflowException e) {
                 greater = true;
             }
@@ -133,13 +142,13 @@ public class ByteCalculator implements Calculator<Byte> {
                 l = m;
             }
         }
-        return (byte) l;
+        return l;
     }
 
     @Override
-    public Byte pow(Byte left, Byte right) throws EvaluationException {
+    public Short pow(Short left, Short right) throws EvaluationException {
         if (right < 0) {
-            throw new IllegalArgumentException(String.format("Negative power base %d is invalid in bytes", right));
+            throw new IllegalArgumentException(String.format("Negative power base %d is invalid in integers", right));
         } else if (right == 0) {
             if (left == 0) {
                 throw new IllegalArgumentException("Zero in zero degree is not a determined value");
@@ -150,12 +159,12 @@ public class ByteCalculator implements Calculator<Byte> {
             return left;
         } else {
             if (right % 2 == 1) {
-                return mul(pow(left, (byte) (right - 1)), left);
+                return mul(pow(left, (short) (right - 1)), left);
             } else {
-                byte half = pow(left, (byte) (right / 2));
+                short half = pow(left, (short) (right / 2));
                 return mul(half, half);
             }
         }
     }
-
+    
 }

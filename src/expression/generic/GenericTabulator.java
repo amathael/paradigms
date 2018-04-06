@@ -21,8 +21,8 @@ public class GenericTabulator implements Tabulator {
         put("d", new DoubleCalculator());
         put("bi", new BigIntegerCalculator());
         put("u", new IntegerCalculator(true));
-        put("b", new ByteCalculator(true));
-        put("f", new FloatCalculator());
+        put("l", new LongCalculator(true));
+        put("s", new ShortCalculator(true));
     }};
 
     private Calculator<?> getCalculator(String mode) throws UnknownModeException {

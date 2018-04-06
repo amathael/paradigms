@@ -6,19 +6,19 @@ import expression.exceptions.IllegalArgumentException;
 /**
  * Created by isuca in paradigms catalogue
  *
- * @date 02-Apr-18
- * @time 13:56
+ * @date 06-Apr-18
+ * @time 15:11
  */
 
-public class IntegerCalculator implements Calculator<Integer> {
+public class LongCalculator implements Calculator<Long> {
 
     private final boolean EXCEPTION_IGNORE;
 
-    public IntegerCalculator() {
+    public LongCalculator() {
         EXCEPTION_IGNORE = false;
     }
 
-    public IntegerCalculator(boolean exceptionIgnore) {
+    public LongCalculator(boolean exceptionIgnore) {
         EXCEPTION_IGNORE = exceptionIgnore;
     }
 
@@ -30,51 +30,51 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
-    public Integer parseString(String string) throws NumberParsingException {
+    public Long parseString(String string) throws NumberParsingException {
         try {
-            return Integer.parseInt(string);
+            return Long.parseLong(string);
         } catch (NumberFormatException e) {
-            throw new NumberParsingException(String.format("Can't parse Integer from %s", string));
+            throw new NumberParsingException(String.format("Can't parse Long from %s", string));
         }
     }
 
     @Override
-    public Integer min(Integer left, Integer right) {
+    public Long min(Long left, Long right) {
         return Math.min(left, right);
     }
 
     @Override
-    public Integer max(Integer left, Integer right) {
-        return Math.min(left, right);
+    public Long max(Long left, Long right) {
+        return Math.max(left, right);
     }
 
     @Override
-    public Integer add(Integer left, Integer right) throws EvaluationException {
-        if (left > 0 && Integer.MAX_VALUE - left < right || left < 0 && Integer.MIN_VALUE - left > right) {
+    public Long add(Long left, Long right) throws EvaluationException {
+        if (left > 0 && Long.MAX_VALUE - left < right || left < 0 && Long.MIN_VALUE - left > right) {
             throwEvaluationException(new OverflowException());
         }
         return left + right;
     }
 
     @Override
-    public Integer sub(Integer left, Integer right) throws EvaluationException {
-        if (left >= 0 && left - Integer.MAX_VALUE > right || left < 0 && left - Integer.MIN_VALUE < right) {
+    public Long sub(Long left, Long right) throws EvaluationException {
+        if (left >= 0 && left - Long.MAX_VALUE > right || left < 0 && left - Long.MIN_VALUE < right) {
             throwEvaluationException(new OverflowException());
         }
         return left - right;
     }
 
     @Override
-    public Integer neg(Integer value) throws EvaluationException {
-        if (value == Integer.MIN_VALUE) {
+    public Long neg(Long value) throws EvaluationException {
+        if (value == Long.MIN_VALUE) {
             throwEvaluationException(new OverflowException());
         }
         return -value;
     }
 
     @Override
-    public Integer mul(Integer left, Integer right) throws EvaluationException {
-        int limit = left > 0 == right > 0 ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+    public Long mul(Long left, Long right) throws EvaluationException {
+        long limit = left > 0 == right > 0 ? Long.MAX_VALUE : Long.MIN_VALUE;
         if (left < 0 && right < 0 && limit / left > right ||
                 left < 0 && right > 0 && limit / right > left ||
                 left > 0 && right < 0 && limit / left > right ||
@@ -85,51 +85,51 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
-    public Integer div(Integer left, Integer right) throws EvaluationException {
+    public Long div(Long left, Long right) throws EvaluationException {
         if (right == 0) {
             throwEvaluationException(new DivisionByZeroException());
         }
-        if (left == Integer.MIN_VALUE && right == -1) {
+        if (left == Long.MIN_VALUE && right == -1) {
             throwEvaluationException(new OverflowException());
         }
         return left / right;
     }
 
     @Override
-    public Integer bitCount(Integer value) {
-        return Integer.bitCount(value);
+    public Long bitCount(Long value) {
+        return (long) Long.bitCount(value);
     }
 
     @Override
-    public Integer not(Integer value) {
+    public Long not(Long value) {
         return ~value;
     }
 
     @Override
-    public Integer and(Integer left, Integer right) {
+    public Long and(Long left, Long right) {
         return left & right;
     }
 
     @Override
-    public Integer or(Integer left, Integer right) {
+    public Long or(Long left, Long right) {
         return left | right;
     }
 
     @Override
-    public Integer xor(Integer left, Integer right) {
+    public Long xor(Long left, Long right) {
         return left ^ right;
     }
 
     @Override
-    public Integer log(Integer left, Integer right) throws EvaluationException {
+    public Long log(Long left, Long right) throws EvaluationException {
         if (left <= 0) {
             throw new IllegalArgumentException(String.format("Log argument %d is non-positive", left));
         } else if (right <= 1) {
             throw new IllegalArgumentException(String.format("Log base %d is lesser than 2", right));
         }
-        int l = 0, r = 32;
+        long l = 0, r = 64;
         while (r - l > 1) {
-            int m = (l + r) / 2;
+            long m = (l + r) / 2;
             boolean greater;
             try {
                 greater = pow(right, m) > left;
@@ -146,14 +146,14 @@ public class IntegerCalculator implements Calculator<Integer> {
     }
 
     @Override
-    public Integer pow(Integer left, Integer right) throws EvaluationException {
+    public Long pow(Long left, Long right) throws EvaluationException {
         if (right < 0) {
             throw new IllegalArgumentException(String.format("Negative power base %d is invalid in integers", right));
         } else if (right == 0) {
             if (left == 0) {
                 throw new IllegalArgumentException("Zero in zero degree is not a determined value");
             }
-            return 1;
+            return 1L;
         }
         if (right == 1) {
             return left;
@@ -161,7 +161,7 @@ public class IntegerCalculator implements Calculator<Integer> {
             if (right % 2 == 1) {
                 return mul(pow(left, right - 1), left);
             } else {
-                int half = pow(left, right / 2);
+                long half = pow(left, right / 2);
                 return mul(half, half);
             }
         }
