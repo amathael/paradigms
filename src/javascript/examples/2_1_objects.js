@@ -84,7 +84,7 @@ point = {
     getX: function() { return point.x; },
     getY: function() { return point.y; }
 };
-dumpObject("Functions in properties: point", point);
+dumpObject("Functions in tokens: point", point);
 println("Result of call  to getX: " + point.getX());
 println("Actual value of getX: " + point.getX);
 println();
@@ -94,7 +94,7 @@ shiftedPoint.dx = 1;
 shiftedPoint.dy = 2;
 shiftedPoint.getX = function() { return shiftedPoint.x + shiftedPoint.dx; };
 shiftedPoint.getY = function() { return shiftedPoint.y + shiftedPoint.dy; };
-dumpObject("Functions in properties: shiftedPoint", shiftedPoint);
+dumpObject("Functions in tokens: shiftedPoint", shiftedPoint);
 println();
 
 println("Aliasing problem");
