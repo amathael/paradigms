@@ -3,7 +3,7 @@ package javascript.jstest;
 /**
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */
-public class ArithmeticTests extends jstest.VariablesTests {{
+public class ArithmeticTests extends VariablesTests {{
     binary("+", (a, b) -> a + b);
     binary("-", (a, b) -> a - b);
     binary("*", (a, b) -> a * b);

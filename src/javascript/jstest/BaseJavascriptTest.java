@@ -2,8 +2,12 @@ package javascript.jstest;
 
 import expression.BaseTest;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * @author Niyaz Nigmatullin
@@ -14,11 +18,11 @@ public abstract class BaseJavascriptTest<E extends Engine> extends BaseTest {
     public static final double EPS = 1e-5;
 
     protected final E engine;
-    protected final javascript.jstest.Language language;
+    protected final Language language;
 
     final boolean testParsing;
 
-    protected BaseJavascriptTest(final E engine, final javascript.jstest.Language language, final boolean testParsing) {
+    protected BaseJavascriptTest(final E engine, final Language language, final boolean testParsing) {
         this.engine = engine;
         this.language = language;
         this.testParsing = testParsing;
@@ -87,7 +91,7 @@ public abstract class BaseJavascriptTest<E extends Engine> extends BaseTest {
     }
 
     protected void evaluate(final double[] vars, final double answer, final double precision) {
-        final javascript.jstest.Engine.Result<Number> result = engine.evaluate(vars);
+        final Engine.Result<Number> result = engine.evaluate(vars);
         assertEquals(result.context, precision, result.value.doubleValue(), answer);
     }
 

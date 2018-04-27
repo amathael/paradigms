@@ -1,7 +1,5 @@
 package javascript.jstest;
 
-import javascript.jstest.AbstractTests;
-import javascript.jstest.BaseJavascriptTest;
 import javascript.jstest.BaseJavascriptTest.Expr;
 import javascript.jstest.BaseJavascriptTest.TExpr;
 

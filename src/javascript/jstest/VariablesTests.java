@@ -1,6 +1,4 @@
-package jstest;
-
-import javascript.jstest.AbstractTests;
+package javascript.jstest;
 
 /**
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)

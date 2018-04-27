@@ -1,7 +1,5 @@
 package javascript.jstest;
 
-import javascript.jstest.EngineException;
-
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;

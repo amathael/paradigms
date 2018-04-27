@@ -1,8 +1,5 @@
 package javascript.jstest;
 
-import javascript.jstest.FunctionalExpressionTest;
-import javascript.jstest.Language;
-
 /**
  * @author Georgiy Korneev (kgeorgiy@kgeorgiy.info)
  */

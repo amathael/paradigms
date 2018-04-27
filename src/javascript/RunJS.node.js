@@ -15,7 +15,7 @@ var context = {
     },
     include: function(file) {
         context.eval(require("fs").readFileSync(file));
-    }
+    },
 };
 context.global = context;
 

@@ -1,7 +1,6 @@
 package javascript.jstest;
 
 import expression.BaseTest;
-import javascript.jstest.AbstractTests;
 
 import java.util.function.BiFunction;
 
@@ -26,8 +25,8 @@ public class FunctionalExpressionTest extends BaseJavascriptTest<Engine> {
             (op, args) -> String.join(" ", args) + " " + op
     );
 
-    protected FunctionalExpressionTest(final javascript.jstest.Language language, final boolean testParsing) {
-        super(new javascript.jstest.JSEngine("functionalExpression.js", ""), language, testParsing);
+    protected FunctionalExpressionTest(final Language language, final boolean testParsing) {
+        super(new JSEngine("functionalExpression.js", ""), language, testParsing);
     }
 
     @Override
@@ -35,13 +34,13 @@ public class FunctionalExpressionTest extends BaseJavascriptTest<Engine> {
         return "parse('" + expression + "')";
     }
 
-    protected static <T extends BaseTest> void test(final Class<T> type, final BiFunction<javascript.jstest.Language, Boolean, T> cons, final String[] args, final AbstractTests tests) {
+    protected static <T extends BaseTest> void test(final Class<T> type, final BiFunction<Language, Boolean, T> cons, final String[] args, final AbstractTests tests) {
         test(type, cons, tests, args, ARITHMETIC_FUNCTIONS);
     }
 
-    protected static <T extends BaseTest> void test(final Class<T> type, final BiFunction<javascript.jstest.Language, Boolean, T> cons, final AbstractTests tests, final String[] args, final Dialect parsed) {
+    protected static <T extends BaseTest> void test(final Class<T> type, final BiFunction<Language, Boolean, T> cons, final AbstractTests tests, final String[] args, final Dialect parsed) {
         cons.apply(
-                new javascript.jstest.Language(parsed, POLISH, tests),
+                new Language(parsed, POLISH, tests),
                 mode(args, type, "easy", "hard") == 1
         ).run();
         System.out.println("Mode: " + args[0]);
