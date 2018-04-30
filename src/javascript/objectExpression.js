@@ -1,11 +1,10 @@
 "use strict";
 
 var expressions = (function () {
-
     function createBy(constructor, args) {
-        var result = Object.create(constructor.prototype);
-        constructor.apply(result, args);
-        return result;
+        var instance = Object.create(constructor.prototype);
+        constructor.apply(instance, args);
+        return instance;
     }
 
     var VARS = {
@@ -15,139 +14,102 @@ var expressions = (function () {
     };
     var OPS = {};
 
-    function Primitive() {
+    var ConstComparable = function () {
+        this.equals = function (value) {
+            return this instanceof Const && this.value === value;
+        };
+    };
+
+    var Primitive = function () {
+        this.toString = function () {
+            return '' + this.value;
+        };
         this.simplify = function () {
             return this;
-        }
-    }
-
-    function Const(value) {
-        this.getValue = function () {
-            return value;
         };
-        this.equals = function (other) {
-            return value === other;
-        }
-    }
+    };
+    Primitive.prototype = new ConstComparable();
 
-    var equals = function (c, value) {
-        return c instanceof Const && c.equals(value);
+    var Const = function (value) {
+        this.value = value;
     };
     Const.prototype = new Primitive();
-    Const.prototype.toString = function () {
-        return this.getValue().toString();
-    };
     Const.prototype.evaluate = function () {
-        return this.getValue();
+        return this.value;
     };
     Const.prototype.diff = function () {
         return new Const(0);
     };
 
-    function Variable(name) {
-        this.getName = function () {
-            return name;
-        }
-    }
-
-    Variable.prototype = new Primitive();
-    Variable.prototype.toString = function () {
-        return this.getName();
+    var Variable = function (name) {
+        this.value = name;
     };
+    Variable.prototype = new Primitive();
     Variable.prototype.evaluate = function () {
-        return arguments[VARS[this.getName()]];
+        return arguments[VARS[this.value]];
     };
     Variable.prototype.diff = function (name) {
-        return name === this.getName() ? new Const(1) : new Const(0);
+        return new Const(name === this.value ? 1 : 0);
     };
 
-    function BasicOperator(operands, symbol, operation, derivative, simplifier) {
-        this.operation = operation;
-        this.derivative = derivative;
-        this.simplifier = simplifier;
-        this.getOperands = function () {
-            return operands;
+    var AbstractOperator = function (symbol, operation, derivative, simplifier) {
+        this.op = function (idx) {
+            return this.operands[idx];
         };
-        this.getSymbol = function () {
-            return symbol;
-        };
-    }
 
-    BasicOperator.prototype.toString = function () {
-        return this.getOperands().join(' ') + ' ' + this.getSymbol()
-    };
-    BasicOperator.prototype.evaluate = function () {
-        var args = arguments;
-        return this.operation.apply(null, this.getOperands().map(function (elem) {
-            return elem.evaluate.apply(elem, args);
-        }));
-    };
-    BasicOperator.prototype.diff = function (name) {
-        return this.derivative.apply(this, [name].concat(this.getOperands()));
-    };
-    BasicOperator.prototype.simplify = function () {
-        var operands = this.getOperands().map(function (elem) {
-            return elem.simplify()
-        });
-        if (operands.every(function (elem) {
-            return elem instanceof Const
-        })) {
-            return new Const(createBy(this.constructor,
-                [operands, undefined, this.operation, undefined, undefined]).evaluate());
+        this.toString = function () {
+            return this.operands.map(function (elem) {
+                return elem.toString();
+            }).join(' ') + ' ' + symbol;
+        };
+        this.evaluate = function () {
+            var args = arguments;
+            return operation.apply(null, this.operands.map(function (elem) {
+                return elem.evaluate.apply(elem, args);
+            }));
+        };
+        this.diff = function (name) {
+            return derivative.call(this, name);
+        };
+        this.simplify = function () {
+            var ops = this.operands.map(function (elem) {
+                return elem.simplify();
+            });
+            if (ops.every(function (elem) {
+                return elem instanceof Const
+            })) {
+                return new Const(operation.apply(null, ops.map(function (elem) {
+                    return elem.value;
+                })));
+            }
+            return simplifier.call(this);
         }
-
-        return this.simplifier.apply(this, operands);
     };
+    AbstractOperator.prototype = new ConstComparable();
 
-    function operatorFactory(symbol, operation, derivative, simplifier) {
-        var operator = function () {
-            var operands = Array.prototype.slice.call(arguments);
-            BasicOperator.call(this, operands, symbol, operation, derivative, simplifier);
+    var operatorFactory = function (symbol, operation, derivative, simplifier) {
+        var Operator = function () {
+            this.operands = [].slice.call(arguments);
         };
-        operator.prototype = BasicOperator.prototype;
+        Operator.prototype = new AbstractOperator(symbol, operation, derivative,
+            simplifier !== undefined ? simplifier : function () {
+                return this
+            });
+
         OPS[symbol] = {
-            op: operator,
-            opCount: operation.length
+            op: Operator,
+            opCount: operation.length,
         };
+        return Operator;
+    };
 
-        return operator;
-    }
-
-    var Add = operatorFactory(
-        '+',
-        function (a, b) {
-            return a + b;
+    var Negate = operatorFactory(
+        'negate',
+        function (a) {
+            return -a;
         },
-        function (name, a, b) {
-            return new Add(a.diff(name), b.diff(name));
-        },
-        function (a, b) {
-            if (equals(a, 0)) {
-                return b;
-            }
-            if (equals(b, 0)) {
-                return a;
-            }
-            return new Add(a, b);
-        }
-    );
-
-    var Subtract = operatorFactory(
-        '-',
-        function (a, b) {
-            return a - b;
-        },
-        function (name, a, b) {
-            return new Subtract(a.diff(name), b.diff(name));
-        },
-        function (a, b) {
-            if (equals(a, 0)) {
-                return new Negate(b);
-            }
-            if (equals(b, 0)) {
-                return a;
-            }
-            return new Subtract(a, b);
+        function (name) {
+            return new Negate(this.op(0).diff(name));
         }
     );
 
@@ -156,11 +118,11 @@ var expressions = (function () {
         function (a) {
             return a * a;
         },
-        function (name, a) {
-            return new Multiply(new Const(2), new Multiply(a, a.diff(name)));
-        },
-        function (a) {
-            return new Square(a);
+        function (name) {
+            return new Multiply(
+                new Const(2),
+                new Multiply(this.op(0), this.op(0).diff(name))
+            );
         }
     );
 
@@ -169,25 +131,49 @@ var expressions = (function () {
         function (a) {
             return Math.pow(Math.abs(a), 0.5);
         },
-        function (name, a) {
-            return new Divide(new Multiply(a.diff(name), a),
-                new Multiply(new Const(2), new Sqrt(new Multiply(a, new Multiply(a, a)))));
-        },
-        function (a) {
-            return new Sqrt(a);
+        function (name) {
+            return new Divide(
+                new Multiply(this.op(0).diff(name), this.op(0)),
+                new Multiply(new Const(2), new Sqrt(new Multiply(this.op(0), new Square(this.op(0)))))
+            );
         }
     );
 
-    var Negate = operatorFactory(
-        'negate',
-        function (a) {
-            return -a;
+    var Add = operatorFactory(
+        '+',
+        function (a, b) {
+            return a + b;
         },
-        function (name, a) {
-            return new Negate(a.diff(name));
+        function (name) {
+            return new Add(this.op(0).diff(name), this.op(1).diff(name));
         },
-        function (a) {
-            return new Negate(a);
+        function () {
+            if (this.op(0).equals(0)) {
+                return this.op(1);
+            }
+            if (this.op(1).equals(0)) {
+                return this.op(0);
+            }
+            return this;
+        }
+    );
+
+    var Subtract = operatorFactory(
+        '-',
+        function (a, b) {
+            return a - b;
+        },
+        function (name) {
+            return new Subtract(this.op(0).diff(name), this.op(1).diff(name));
+        },
+        function () {
+            if (this.op(0).equals(0)) {
+                return new Negate(this.op(1));
+            }
+            if (this.op(1).equals(0)) {
+                return this.op(0);
+            }
+            return this;
         }
     );
 
@@ -196,20 +182,23 @@ var expressions = (function () {
         function (a, b) {
             return a * b;
         },
-        function (name, a, b) {
-            return new Add(new Multiply(a, b.diff(name)), new Multiply(a.diff(name), b));
+        function (name) {
+            return new Add(
+                new Multiply(this.op(0), this.op(1).diff(name)),
+                new Multiply(this.op(0).diff(name), this.op(1))
+            );
         },
-        function (a, b) {
-            if (equals(a, 0) || equals(b, 0)) {
+        function () {
+            if (this.op(0).equals(0) || this.op(1).equals(0)) {
                 return new Const(0);
             }
-            if (equals(a, 1)) {
-                return b;
+            if (this.op(0).equals(1)) {
+                return this.op(1);
             }
-            if (equals(b, 1)) {
-                return a;
+            if (this.op(1).equals(1)) {
+                return this.op(0);
             }
-            return new Multiply(a, b);
+            return this;
         }
     );
 
@@ -218,18 +207,23 @@ var expressions = (function () {
         function (a, b) {
             return a / b;
         },
-        function (name, a, b) {
-            return new Divide(new Subtract(new Multiply(a.diff(name), b), new Multiply(a, b.diff(name))),
-                new Multiply(b, b));
+        function (name) {
+            return new Divide(
+                new Subtract(
+                    new Multiply(this.op(0).diff(name), this.op(1)),
+                    new Multiply(this.op(0), this.op(1).diff(name))
+                ),
+                new Square(this.op(1))
+            );
         },
-        function (a, b) {
-            if (equals(a, 0)) {
+        function () {
+            if (this.op(0).equals(0)) {
                 return new Const(0);
             }
-            if (equals(b, 1)) {
-                return a;
+            if (this.op(1).equals(1)) {
+                return this.op(0);
             }
-            return new Divide(a, b);
+            return this;
         }
     );
 
@@ -257,20 +251,36 @@ var expressions = (function () {
     };
 
     return {
-        'Const': Const,
-        'Variable': Variable,
-        'Add': Add,
-        'Subtract': Subtract,
-        'Negate': Negate,
-        'Square': Square,
-        'Sqrt': Sqrt,
-        'Multiply': Multiply,
-        'Divide': Divide,
-        'parse': parse
+        Const: Const,
+        Variable: Variable,
+
+        Negate: Negate,
+        Square: Square,
+        Sqrt: Sqrt,
+
+        Add: Add,
+        Subtract: Subtract,
+        Multiply: Multiply,
+        Divide: Divide,
+
+        parse: parse,
     }
 
 })();
 
-for (var name in expressions) {
-    global[name] = expressions[name];
-}
+var
+    Const = expressions.Const,
+    Variable = expressions.Variable,
+
+    Negate = expressions.Negate,
+    Square = expressions.Square,
+    Sqrt = expressions.Sqrt,
+
+    Add = expressions.Add,
+    Subtract = expressions.Subtract,
+    Multiply = expressions.Multiply,
+    Divide = expressions.Divide,
+
+    parse = expressions.parse;
+
+var expr = new Add(new Const(1), new Const(1));

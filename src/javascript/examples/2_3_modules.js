@@ -37,8 +37,8 @@ var point2 = new IPoint(10, 20);
 dumpObject("point1", point1);
 dumpObject("point2", point2);
 
-println("name is shared");
-point1.setName("Changed name");
+println("value is shared");
+point1.setName("Changed value");
 println("    point1.getName() = " + point1.getName());
 println("    point2.getName() = " + point2.getName());
 

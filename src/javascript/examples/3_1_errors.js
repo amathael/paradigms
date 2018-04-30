@@ -9,7 +9,7 @@ try {
 } catch (e) {
     println("Got exception");
     println("    toString():   " + e.toString());
-    println("    name:         " + e.name);
+    println("    value:         " + e.name);
     println("    message:      " + e.message);
     println("    io TypeError: " + (e instanceof TypeError));
     println("    io Error:     " + (e instanceof Error));
