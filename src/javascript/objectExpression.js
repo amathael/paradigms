@@ -82,7 +82,7 @@ var expressions = (function () {
                     return elem.value;
                 })));
             }
-            return simplifier.call(this);
+            return simplifier.apply(this, ops);
         }
     };
     AbstractOperator.prototype = new ConstComparable();
@@ -93,7 +93,7 @@ var expressions = (function () {
         };
         Operator.prototype = new AbstractOperator(symbol, operation, derivative,
             simplifier !== undefined ? simplifier : function () {
-                return this
+                return createBy(Operator, arguments);
             });
 
         OPS[symbol] = {
@@ -134,7 +134,13 @@ var expressions = (function () {
         function (name) {
             return new Divide(
                 new Multiply(this.op(0).diff(name), this.op(0)),
-                new Multiply(new Const(2), new Sqrt(new Multiply(this.op(0), new Square(this.op(0)))))
+                new Multiply(
+                    new Const(2),
+                    new Sqrt(new Multiply(
+                        this.op(0),
+                        new Multiply(this.op(0), this.op(0)))
+                    )
+                )
             );
         }
     );
@@ -147,14 +153,14 @@ var expressions = (function () {
         function (name) {
             return new Add(this.op(0).diff(name), this.op(1).diff(name));
         },
-        function () {
-            if (this.op(0).equals(0)) {
-                return this.op(1);
+        function (a, b) {
+            if (a.equals(0)) {
+                return b;
             }
-            if (this.op(1).equals(0)) {
-                return this.op(0);
+            if (b.equals(0)) {
+                return a;
             }
-            return this;
+            return new Add(a, b);
         }
     );
 
@@ -166,14 +172,14 @@ var expressions = (function () {
         function (name) {
             return new Subtract(this.op(0).diff(name), this.op(1).diff(name));
         },
-        function () {
-            if (this.op(0).equals(0)) {
-                return new Negate(this.op(1));
+        function (a, b) {
+            if (a.equals(0)) {
+                return new Negate(b);
             }
-            if (this.op(1).equals(0)) {
-                return this.op(0);
+            if (b.equals(0)) {
+                return a;
             }
-            return this;
+            return new Subtract(a, b);
         }
     );
 
@@ -188,17 +194,17 @@ var expressions = (function () {
                 new Multiply(this.op(0).diff(name), this.op(1))
             );
         },
-        function () {
-            if (this.op(0).equals(0) || this.op(1).equals(0)) {
+        function (a, b) {
+            if (a.equals(0) || b.equals(0)) {
                 return new Const(0);
             }
-            if (this.op(0).equals(1)) {
-                return this.op(1);
+            if (a.equals(1)) {
+                return b;
             }
-            if (this.op(1).equals(1)) {
-                return this.op(0);
+            if (b.equals(1)) {
+                return a;
             }
-            return this;
+            return new Multiply(a, b);
         }
     );
 
@@ -213,17 +219,17 @@ var expressions = (function () {
                     new Multiply(this.op(0).diff(name), this.op(1)),
                     new Multiply(this.op(0), this.op(1).diff(name))
                 ),
-                new Square(this.op(1))
+                new Multiply(this.op(1), this.op(1))
             );
         },
-        function () {
-            if (this.op(0).equals(0)) {
+        function (a, b) {
+            if (a.equals(0)) {
                 return new Const(0);
             }
-            if (this.op(1).equals(1)) {
-                return this.op(0);
+            if (b.equals(1)) {
+                return a;
             }
-            return this;
+            return new Divide(a, b);
         }
     );
 
@@ -282,5 +288,3 @@ var
     Divide = expressions.Divide,
 
     parse = expressions.parse;
-
-var expr = new Add(new Const(1), new Const(1));
