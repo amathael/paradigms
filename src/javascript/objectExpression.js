@@ -21,6 +21,9 @@ var expressions = (function () {
     };
 
     var Primitive = function () {
+        this.prefix = function () {
+            return '' + this.value;
+        };
         this.toString = function () {
             return '' + this.value;
         };
@@ -57,6 +60,11 @@ var expressions = (function () {
             return this.operands[idx];
         };
 
+        this.prefix = function () {
+            return '(' + symbol + ' ' + this.operands.map(function (elem) {
+                return elem.toString();
+            }).join(' ') + ')';
+        };
         this.toString = function () {
             return this.operands.map(function (elem) {
                 return elem.toString();
@@ -233,7 +241,7 @@ var expressions = (function () {
         }
     );
 
-    var parse = function (str) {
+    var parseSuffix = function (str) {
         var tokens = str.split(' ').filter(function (token) {
             return token !== '';
         });
@@ -256,6 +264,81 @@ var expressions = (function () {
         return stack.pop();
     };
 
+    var parsePrefix = function (str) {
+        var idx = 0;
+        var token = null;
+        var nextToken = function () {
+            var isDigit = function (c) {
+                return '0' <= c && c <= '9';
+            };
+            var isBreaking = function (c) {
+                return c === ' ' || c === '(' || c === ')';
+            };
+            while (idx < str.length && str[idx] === ' ') {
+                idx++;
+            }
+            if (idx < str.length) {
+                if (str[idx] === '(' || str[idx] === ')') {
+                    token = str[idx++];
+                } else {
+                    var t = '';
+                    if (isDigit(str[idx])) {
+                        while (idx < str.length && isDigit(str[idx])) {
+                            t += str[idx++];
+                        }
+                    } else {
+                        while (idx < str.length && !isBreaking(str[idx])) {
+                            t += str[idx++];
+                        }
+                    }
+                    token = t;
+                }
+            } else {
+                token = null;
+            }
+            return token;
+        };
+
+        var parseOperand = function () {
+            var res;
+            if (token === '(') {
+                res = parseExpression();
+            } else if (token in VARS) {
+                res = new Variable(token);
+            } else if (token != null && !isNaN(token)) {
+                res = new Const(parseInt(token));
+            } else {
+                throw new Error('Operand expected')
+            }
+            nextToken();
+            return res;
+        };
+
+        var parseExpression = function () {
+            if (token === '(') {
+                nextToken();
+                if (!token in OPS) {
+                    throw new Error('Operation expected');
+                }
+                var op = OPS[token];
+                var args = [];
+                for (var i = 0; i < op.opCount; i++) {
+                    args.push(parseOperand());
+                }
+                if (token !== ')') {
+                    throw new Error('Closing parenthesis expected');
+                }
+                nextToken();
+                return createBy(op.op, args);
+            } else {
+                return parseOperand();
+            }
+        };
+
+        nextToken();
+        return parseExpression();
+    };
+
     return {
         Const: Const,
         Variable: Variable,
@@ -269,7 +352,8 @@ var expressions = (function () {
         Multiply: Multiply,
         Divide: Divide,
 
-        parse: parse,
+        parse: parseSuffix,
+        parsePrefix: parsePrefix,
     }
 
 })();
@@ -287,4 +371,5 @@ var
     Multiply = expressions.Multiply,
     Divide = expressions.Divide,
 
-    parse = expressions.parse;
+    parse = expressions.parse,
+    parsePrefix = expressions.parsePrefix;
