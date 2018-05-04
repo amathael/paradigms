@@ -41,8 +41,12 @@ var expressions = (function () {
         return this.value;
     };
     Const.prototype.diff = function () {
-        return new Const(0);
+        return Const.ZERO;
     };
+
+    Const.ZERO = new Const(0);
+    Const.ONE = new Const(1);
+    Const.TWO = new Const(2);
 
     var Variable = function (name) {
         this.value = name;
@@ -52,7 +56,7 @@ var expressions = (function () {
         return arguments[VARS[this.value]];
     };
     Variable.prototype.diff = function (name) {
-        return new Const(name === this.value ? 1 : 0);
+        return name === this.value ? Const.ONE : Const.ZERO;
     };
 
     var AbstractOperator = function (symbol, operation, derivative, simplifier) {
@@ -128,7 +132,7 @@ var expressions = (function () {
         },
         function (name) {
             return new Multiply(
-                new Const(2),
+                Const.TWO,
                 new Multiply(this.op(0), this.op(0).diff(name))
             );
         }
@@ -143,7 +147,7 @@ var expressions = (function () {
             return new Divide(
                 new Multiply(this.op(0).diff(name), this.op(0)),
                 new Multiply(
-                    new Const(2),
+                    Const.TWO,
                     new Sqrt(new Multiply(
                         this.op(0),
                         new Multiply(this.op(0), this.op(0)))
@@ -204,7 +208,7 @@ var expressions = (function () {
         },
         function (a, b) {
             if (a.equals(0) || b.equals(0)) {
-                return new Const(0);
+                return Const.ZERO;
             }
             if (a.equals(1)) {
                 return b;
@@ -232,7 +236,7 @@ var expressions = (function () {
         },
         function (a, b) {
             if (a.equals(0)) {
-                return new Const(0);
+                return Const.ZERO;
             }
             if (b.equals(1)) {
                 return a;
@@ -263,6 +267,44 @@ var expressions = (function () {
 
         return stack.pop();
     };
+
+    var exceptions = function () {
+        var CustomException = function () {
+            this.toString = function () {
+                return this.msg + ' expected on position ' + this.idx;
+            }
+        };
+        CustomException.prototype = Error.prototype;
+
+        var exceptionFactory = function (expecting) {
+            var Exception = function (idx) {
+                this.msg = expecting;
+                this.idx = idx;
+            };
+            Exception.prototype = CustomException;
+            return Exception;
+        };
+
+        var ClosingParenthesisMissingException = exceptionFactory(
+            'Closing parenthesis'
+        );
+        var ExpressionEndExpectedException = exceptionFactory(
+            'Expression end'
+        );
+        var OperationExpectedException = exceptionFactory(
+            'Operation symbol'
+        );
+        var OperandExpectedException = exceptionFactory(
+            'Operand'
+        );
+
+        return {
+            ClosingParenthesisMissingException: ClosingParenthesisMissingException,
+            ExpressionEndExpectedException: ExpressionEndExpectedException,
+            OperationExpectedException: OperationExpectedException,
+            OperandExpectedException: OperandExpectedException,
+        }
+    }();
 
     var parsePrefix = function (str) {
         var idx = 0;
@@ -296,7 +338,6 @@ var expressions = (function () {
             } else {
                 token = null;
             }
-            return token;
         };
 
         var parseOperand = function () {
@@ -308,7 +349,7 @@ var expressions = (function () {
             } else if (token != null && !isNaN(token)) {
                 res = new Const(parseInt(token));
             } else {
-                throw new Error('Operand expected')
+                throw new exceptions.OperandExpectedException(idx);
             }
             nextToken();
             return res;
@@ -318,15 +359,16 @@ var expressions = (function () {
             if (token === '(') {
                 nextToken();
                 if (!token in OPS) {
-                    throw new Error('Operation expected');
+                    throw new exceptions.OperationExpectedException(idx);
                 }
                 var op = OPS[token];
+                nextToken();
                 var args = [];
                 for (var i = 0; i < op.opCount; i++) {
                     args.push(parseOperand());
                 }
                 if (token !== ')') {
-                    throw new Error('Closing parenthesis expected');
+                    throw new exceptions.ClosingParenthesisMissingException(idx);
                 }
                 nextToken();
                 return createBy(op.op, args);
@@ -336,7 +378,11 @@ var expressions = (function () {
         };
 
         nextToken();
-        return parseExpression();
+        var res = parseExpression();
+        if (idx !== str.length) {
+            throw new exceptions.ExpressionEndExpectedException(idx);
+        }
+        return res;
     };
 
     return {
@@ -373,3 +419,5 @@ var
 
     parse = expressions.parse,
     parsePrefix = expressions.parsePrefix;
+
+// var expr = parsePrefix(' (  -     3   y) ');
