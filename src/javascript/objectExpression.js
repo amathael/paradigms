@@ -24,6 +24,9 @@ var expressions = (function () {
         this.prefix = function () {
             return '' + this.value;
         };
+        this.postfix = function () {
+            return '' + this.value;
+        };
         this.toString = function () {
             return '' + this.value;
         };
@@ -50,14 +53,27 @@ var expressions = (function () {
 
     var Variable = function (name) {
         this.value = name;
+        this.index = VARS[this.value];
     };
     Variable.prototype = new Primitive();
     Variable.prototype.evaluate = function () {
-        return arguments[VARS[this.value]];
+        return arguments[this.index];
     };
     Variable.prototype.diff = function (name) {
         return name === this.value ? Const.ONE : Const.ZERO;
     };
+
+    var Creator = function () {
+        this.requested = {};
+
+        this.get = function (name) {
+            if (!(OPS[name] in this.requested)) {
+                this.requested[name] = new Variable(name);
+            }
+            return this.requested[name];
+        }
+    };
+    var variableCreator = new Creator();
 
     var AbstractOperator = function (symbol, operation, derivative, simplifier) {
         this.op = function (idx) {
@@ -66,13 +82,16 @@ var expressions = (function () {
 
         this.prefix = function () {
             return '(' + symbol + ' ' + this.operands.map(function (elem) {
-                return elem.toString();
+                return elem.prefix();
             }).join(' ') + ')';
         };
+        this.postfix = function () {
+            return '(' + this.operands.map(function (elem) {
+                return elem.postfix()
+            }).join(' ') + ' ' + symbol + ')';
+        };
         this.toString = function () {
-            return this.operands.map(function (elem) {
-                return elem.toString();
-            }).join(' ') + ' ' + symbol;
+            return this.operands.join(' ') + ' ' + symbol;
         };
         this.evaluate = function () {
             var args = arguments;
@@ -114,6 +133,34 @@ var expressions = (function () {
         };
         return Operator;
     };
+
+    var ArcTan = operatorFactory(
+        'atan',
+        function (a) {
+            return Math.atan(a);
+        },
+        function (name) {
+            return new Multiply(
+                new Divide(new Add(
+                    new Multiply(this.op(0), this.op(0)),
+                    Const.ONE)),
+                this.op(0).diff(name)
+            );
+        }
+    );
+
+    var Exp = operatorFactory(
+        'exp',
+        function (a) {
+            return Math.exp(a);
+        },
+        function (name) {
+            return new Multiply(
+                this,
+                this.op(0).diff(name)
+            );
+        }
+    );
 
     var Negate = operatorFactory(
         'negate',
@@ -245,7 +292,7 @@ var expressions = (function () {
         }
     );
 
-    var parseSuffix = function (str) {
+    var parse = function (str) {
         var tokens = str.split(' ').filter(function (token) {
             return token !== '';
         });
@@ -257,11 +304,11 @@ var expressions = (function () {
                 stack.push(createBy(OPS[token].op,
                     stack.splice(stack.length - OPS[token].opCount, OPS[token].opCount)));
             } else if (token in VARS) {
-                stack.push(new Variable(token));
+                stack.push(variableCreator.get(token));
             } else if (!isNaN(parseInt(token))) {
                 stack.push(new Const(parseInt(token)));
             } else {
-                // some problems
+                // some problems happened
             }
         }
 
@@ -269,33 +316,31 @@ var expressions = (function () {
     };
 
     var exceptions = function () {
-        var CustomException = function () {
-            this.toString = function () {
-                return this.msg + ' expected on position ' + this.idx;
-            }
-        };
-        CustomException.prototype = Error.prototype;
-
-        var exceptionFactory = function (expecting) {
-            var Exception = function (idx) {
-                this.msg = expecting;
-                this.idx = idx;
+        var exceptionFactory = function (msg) {
+            var Exception = function (idx, token) {
+                this.name = msg + " expected on position " + idx + ", where '" + token + "' is";
             };
-            Exception.prototype = CustomException;
+            Exception.prototype = Error.prototype;
             return Exception;
         };
 
         var ClosingParenthesisMissingException = exceptionFactory(
-            'Closing parenthesis'
+            'Closing parenthesis expected'
         );
         var ExpressionEndExpectedException = exceptionFactory(
-            'Expression end'
+            'End of expression expected'
         );
         var OperationExpectedException = exceptionFactory(
-            'Operation symbol'
+            'Operation symbol expected'
         );
         var OperandExpectedException = exceptionFactory(
-            'Operand'
+            'Operand expected'
+        );
+        var EndOfConstantExpectedException = exceptionFactory(
+            'End of constant expected'
+        );
+        var InvalidOperandsAmountException = exceptionFactory(
+            'Invalid operands amount found'
         );
 
         return {
@@ -303,19 +348,23 @@ var expressions = (function () {
             ExpressionEndExpectedException: ExpressionEndExpectedException,
             OperationExpectedException: OperationExpectedException,
             OperandExpectedException: OperandExpectedException,
+            EndOfConstantExpectedException: EndOfConstantExpectedException,
+            InvalidOperandsAmountException: InvalidOperandsAmountException,
         }
     }();
 
-    var parsePrefix = function (str) {
+    var tokenizer = function(str) {
         var idx = 0;
         var token = null;
+
+        var isDigit = function (c) {
+            return '0' <= c && c <= '9';
+        };
+        var isBreaking = function (c) {
+            return /[\s]/.test("" + c) || c === '(' || c === ')';
+        };
+
         var nextToken = function () {
-            var isDigit = function (c) {
-                return '0' <= c && c <= '9';
-            };
-            var isBreaking = function (c) {
-                return c === ' ' || c === '(' || c === ')';
-            };
             while (idx < str.length && str[idx] === ' ') {
                 idx++;
             }
@@ -324,9 +373,16 @@ var expressions = (function () {
                     token = str[idx++];
                 } else {
                     var t = '';
-                    if (isDigit(str[idx])) {
+                    if (isDigit(str[idx]) || str[idx] === '-' && idx + 1 < str.length && isDigit(idx + 1)) {
+                        if (str[idx] === '-') {
+                            t = '-';
+                            idx++;
+                        }
                         while (idx < str.length && isDigit(str[idx])) {
                             t += str[idx++];
+                        }
+                        if (idx !== str.length && !isBreaking(str[idx])) {
+                            throw new exceptions.EndOfConstantExpectedException(idx, str[idx]);
                         }
                     } else {
                         while (idx < str.length && !isBreaking(str[idx])) {
@@ -340,35 +396,53 @@ var expressions = (function () {
             }
         };
 
+        return {
+            nextToken: nextToken,
+            token: function () {
+                return token;
+            },
+            idx: function() {
+                return idx;
+            }
+        };
+    };
+
+    var parsePrefix = function (str) {
+        var tokenize = tokenizer(str);
+        var nextToken = tokenize.nextToken,
+            token = tokenize.token,
+            idx = tokenize.idx;
+
         var parseOperand = function () {
             var res;
-            if (token === '(') {
+            if (token() === '(') {
                 res = parseExpression();
-            } else if (token in VARS) {
-                res = new Variable(token);
-            } else if (token != null && !isNaN(token)) {
-                res = new Const(parseInt(token));
+            } else if (token() in VARS) {
+                res = variableCreator.get(token());
+                nextToken();
+            } else if (token() != null && !isNaN(token())) {
+                res = new Const(parseInt(token()));
+                nextToken();
             } else {
-                throw new exceptions.OperandExpectedException(idx);
+                throw new exceptions.OperandExpectedException(idx(), token());
             }
-            nextToken();
             return res;
         };
 
         var parseExpression = function () {
-            if (token === '(') {
+            if (token() === '(') {
                 nextToken();
-                if (!token in OPS) {
-                    throw new exceptions.OperationExpectedException(idx);
+                if (!(token() in OPS)) {
+                    throw new exceptions.OperationExpectedException(idx(), token());
                 }
-                var op = OPS[token];
+                var op = OPS[token()];
                 nextToken();
                 var args = [];
                 for (var i = 0; i < op.opCount; i++) {
                     args.push(parseOperand());
                 }
-                if (token !== ')') {
-                    throw new exceptions.ClosingParenthesisMissingException(idx);
+                if (token() !== ')') {
+                    throw new exceptions.ClosingParenthesisMissingException(idx(), token());
                 }
                 nextToken();
                 return createBy(op.op, args);
@@ -379,8 +453,60 @@ var expressions = (function () {
 
         nextToken();
         var res = parseExpression();
-        if (idx !== str.length) {
-            throw new exceptions.ExpressionEndExpectedException(idx);
+        if (token() !== null) {
+            throw new exceptions.ExpressionEndExpectedException(idx(), token());
+        }
+        return res;
+    };
+
+    var parsePostfix = function (str) {
+        var tokenize = tokenizer(str);
+        var nextToken = tokenize.nextToken,
+            token = tokenize.token,
+            idx = tokenize.idx;
+
+        var parseOperand = function () {
+            var res;
+            if (token() === '(') {
+                res = parseExpression();
+            } else if (token() in VARS) {
+                res = variableCreator.get(token());
+                nextToken();
+            } else if (token() != null && !isNaN(token())) {
+                res = new Const(parseInt(token()));
+                nextToken();
+            } else {
+                throw new exceptions.OperandExpectedException(idx(), token());
+            }
+            return res;
+        };
+
+        var parseExpression = function () {
+            if (token() === '(') {
+                nextToken();
+                var args = [];
+                while (!(token() in OPS)) {
+                    args.push(parseOperand());
+                }
+                var op = OPS[token()];
+                if (args.length !== op.opCount) {
+                    throw new exceptions.InvalidOperandsAmountException(idx(), token());
+                }
+                nextToken();
+                if (token() !== ')') {
+                    throw new exceptions.ClosingParenthesisMissingException(idx(), token());
+                }
+                nextToken();
+                return createBy(op.op, args);
+            } else {
+                return parseOperand();
+            }
+        };
+
+        nextToken();
+        var res = parseExpression();
+        if (token() !== null) {
+            throw new exceptions.ExpressionEndExpectedException(idx(), token());
         }
         return res;
     };
@@ -389,6 +515,8 @@ var expressions = (function () {
         Const: Const,
         Variable: Variable,
 
+        ArcTan: ArcTan,
+        Exp: Exp,
         Negate: Negate,
         Square: Square,
         Sqrt: Sqrt,
@@ -398,8 +526,9 @@ var expressions = (function () {
         Multiply: Multiply,
         Divide: Divide,
 
-        parse: parseSuffix,
+        parse: parse,
         parsePrefix: parsePrefix,
+        parsePostfix: parsePostfix,
     }
 
 })();
@@ -408,6 +537,8 @@ var
     Const = expressions.Const,
     Variable = expressions.Variable,
 
+    ArcTan = expressions.ArcTan,
+    Exp = expressions.Exp,
     Negate = expressions.Negate,
     Square = expressions.Square,
     Sqrt = expressions.Sqrt,
@@ -418,6 +549,5 @@ var
     Divide = expressions.Divide,
 
     parse = expressions.parse,
-    parsePrefix = expressions.parsePrefix;
-
-// var expr = parsePrefix(' (  -     3   y) ');
+    parsePrefix = expressions.parsePrefix,
+    parsePostfix = expressions.parsePostfix;
