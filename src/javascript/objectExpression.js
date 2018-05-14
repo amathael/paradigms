@@ -1,4 +1,5 @@
 "use strict";
+"use strict";
 
 var expressions = (function () {
     function createBy(constructor, args) {
@@ -15,7 +16,7 @@ var expressions = (function () {
     var OPS = {};
 
     var ConstComparable = function () {
-        this.equals = function (value) {
+        this.constEquals = function (value) {
             return this instanceof Const && this.value === value;
         };
     };
@@ -213,13 +214,7 @@ var expressions = (function () {
             return new Add(this.op(0).diff(name), this.op(1).diff(name));
         },
         function (a, b) {
-            if (a.equals(0)) {
-                return b;
-            }
-            if (b.equals(0)) {
-                return a;
-            }
-            return new Add(a, b);
+            return a.constEquals(0) ? b : b.constEquals(0) ? a : new Add(a, b);
         }
     );
 
@@ -232,13 +227,7 @@ var expressions = (function () {
             return new Subtract(this.op(0).diff(name), this.op(1).diff(name));
         },
         function (a, b) {
-            if (a.equals(0)) {
-                return new Negate(b);
-            }
-            if (b.equals(0)) {
-                return a;
-            }
-            return new Subtract(a, b);
+            return a.constEquals(0) ? new Negate(b) : b.constEquals(0) ? a : new Subtract(a, b);
         }
     );
 
@@ -254,16 +243,8 @@ var expressions = (function () {
             );
         },
         function (a, b) {
-            if (a.equals(0) || b.equals(0)) {
-                return Const.ZERO;
-            }
-            if (a.equals(1)) {
-                return b;
-            }
-            if (b.equals(1)) {
-                return a;
-            }
-            return new Multiply(a, b);
+            return a.constEquals(0) || b.constEquals(0) ? Const.ZERO :
+                a.constEquals(1) ? b : b.constEquals(1) ? a : new Multiply(a, b);
         }
     );
 
@@ -282,13 +263,7 @@ var expressions = (function () {
             );
         },
         function (a, b) {
-            if (a.equals(0)) {
-                return Const.ZERO;
-            }
-            if (b.equals(1)) {
-                return a;
-            }
-            return new Divide(a, b);
+            return a.constEquals(0) ? Const.ZERO : b.constEquals(1) ? a : new Divide(a, b);
         }
     );
 
@@ -318,7 +293,7 @@ var expressions = (function () {
     var exceptions = function () {
         var exceptionFactory = function (msg) {
             var Exception = function (idx, token) {
-                this.name = msg + " expected on position " + idx + ", where '" + token + "' is";
+                this.name = msg + " on position " + idx + ", where '" + token + "' is";
             };
             Exception.prototype = Error.prototype;
             return Exception;
@@ -353,160 +328,108 @@ var expressions = (function () {
         }
     }();
 
-    var tokenizer = function(str) {
-        var idx = 0;
-        var token = null;
+    var Tokenizer = function (str) {
+        this.idx = 0;
+        this.oldToken = '';
+        this.token = '';
 
-        var isDigit = function (c) {
-            return '0' <= c && c <= '9';
-        };
-        var isBreaking = function (c) {
-            return /[\s]/.test("" + c) || c === '(' || c === ')';
+        var isWhitespace = function (c) {
+            return /[\s]/.test("" + c);
         };
 
-        var nextToken = function () {
-            while (idx < str.length && str[idx] === ' ') {
-                idx++;
+        this.nextToken = function () {
+            this.oldToken = this.token;
+            while (this.idx < str.length && isWhitespace(str[this.idx])) {
+                this.idx++;
             }
-            if (idx < str.length) {
-                if (str[idx] === '(' || str[idx] === ')') {
-                    token = str[idx++];
-                } else {
-                    var t = '';
-                    if (isDigit(str[idx]) || str[idx] === '-' && idx + 1 < str.length && isDigit(idx + 1)) {
-                        if (str[idx] === '-') {
-                            t = '-';
-                            idx++;
-                        }
-                        while (idx < str.length && isDigit(str[idx])) {
-                            t += str[idx++];
-                        }
-                        if (idx !== str.length && !isBreaking(str[idx])) {
-                            throw new exceptions.EndOfConstantExpectedException(idx, str[idx]);
-                        }
-                    } else {
-                        while (idx < str.length && !isBreaking(str[idx])) {
-                            t += str[idx++];
-                        }
-                    }
-                    token = t;
-                }
+            this.token = '';
+            if (str[this.idx] === '(' || str[this.idx] === ')') {
+                this.token = str[this.idx++];
             } else {
-                token = null;
-            }
-        };
-
-        return {
-            nextToken: nextToken,
-            token: function () {
-                return token;
-            },
-            idx: function() {
-                return idx;
+                while (this.idx < str.length &&
+                !isWhitespace(str[this.idx]) && str[this.idx] !== '(' && str[this.idx] !== ')') {
+                    this.token += str[this.idx++];
+                }
             }
         };
     };
 
-    var parsePrefix = function (str) {
-        var tokenize = tokenizer(str);
-        var nextToken = tokenize.nextToken,
-            token = tokenize.token,
-            idx = tokenize.idx;
+    var parseOperand = function (tokenizer, parseExpression) {
+        if (tokenizer.token === '(') {
+            return parseExpression();
+        } else if (tokenizer.token in VARS) {
+            tokenizer.nextToken();
+            return variableCreator.get(tokenizer.oldToken);
+        } else if (tokenizer.token !== '' && !isNaN(tokenizer.token)) {
+            tokenizer.nextToken();
+            return new Const(parseInt(tokenizer.oldToken));
+        } else {
+            throw new exceptions.OperandExpectedException(tokenizer.idx, tokenizer.token);
+        }
+    };
 
-        var parseOperand = function () {
-            var res;
-            if (token() === '(') {
-                res = parseExpression();
-            } else if (token() in VARS) {
-                res = variableCreator.get(token());
-                nextToken();
-            } else if (token() != null && !isNaN(token())) {
-                res = new Const(parseInt(token()));
-                nextToken();
-            } else {
-                throw new exceptions.OperandExpectedException(idx(), token());
-            }
-            return res;
-        };
+    var parsePrefix = function (str) {
+        var tokenizer = new Tokenizer(str);
 
         var parseExpression = function () {
-            if (token() === '(') {
-                nextToken();
-                if (!(token() in OPS)) {
-                    throw new exceptions.OperationExpectedException(idx(), token());
+            if (tokenizer.token === '(') {
+                tokenizer.nextToken();
+                if (!(tokenizer.token in OPS)) {
+                    throw new exceptions.OperationExpectedException(tokenizer.idx, tokenizer.token);
                 }
-                var op = OPS[token()];
-                nextToken();
+                var op = OPS[tokenizer.token];
+                tokenizer.nextToken();
                 var args = [];
                 for (var i = 0; i < op.opCount; i++) {
-                    args.push(parseOperand());
+                    args.push(parseOperand(tokenizer, parseExpression));
                 }
-                if (token() !== ')') {
-                    throw new exceptions.ClosingParenthesisMissingException(idx(), token());
+                if (tokenizer.token !== ')') {
+                    throw new exceptions.ClosingParenthesisMissingException(tokenizer.idx, tokenizer.token);
                 }
-                nextToken();
+                tokenizer.nextToken();
                 return createBy(op.op, args);
             } else {
-                return parseOperand();
+                return parseOperand(tokenizer, parseExpression);
             }
         };
 
-        nextToken();
+        tokenizer.nextToken();
         var res = parseExpression();
-        if (token() !== null) {
-            throw new exceptions.ExpressionEndExpectedException(idx(), token());
+        if (tokenizer.token !== '') {
+            throw new exceptions.ExpressionEndExpectedException(tokenizer.idx, tokenizer.token);
         }
         return res;
     };
 
     var parsePostfix = function (str) {
-        var tokenize = tokenizer(str);
-        var nextToken = tokenize.nextToken,
-            token = tokenize.token,
-            idx = tokenize.idx;
-
-        var parseOperand = function () {
-            var res;
-            if (token() === '(') {
-                res = parseExpression();
-            } else if (token() in VARS) {
-                res = variableCreator.get(token());
-                nextToken();
-            } else if (token() != null && !isNaN(token())) {
-                res = new Const(parseInt(token()));
-                nextToken();
-            } else {
-                throw new exceptions.OperandExpectedException(idx(), token());
-            }
-            return res;
-        };
+        var tokenizer = new Tokenizer(str);
 
         var parseExpression = function () {
-            if (token() === '(') {
-                nextToken();
+            if (tokenizer.token === '(') {
+                tokenizer.nextToken();
                 var args = [];
-                while (!(token() in OPS)) {
-                    args.push(parseOperand());
+                while (!(tokenizer.token in OPS)) {
+                    args.push(parseOperand(tokenizer, parseExpression));
                 }
-                var op = OPS[token()];
+                var op = OPS[tokenizer.token];
                 if (args.length !== op.opCount) {
-                    throw new exceptions.InvalidOperandsAmountException(idx(), token());
+                    throw new exceptions.InvalidOperandsAmountException(tokenizer.idx, tokenizer.token);
                 }
-                nextToken();
-                if (token() !== ')') {
-                    throw new exceptions.ClosingParenthesisMissingException(idx(), token());
+                tokenizer.nextToken();
+                if (tokenizer.token !== ')') {
+                    throw new exceptions.ClosingParenthesisMissingException(tokenizer.idx, tokenizer.token);
                 }
-                nextToken();
+                tokenizer.nextToken();
                 return createBy(op.op, args);
             } else {
-                return parseOperand();
+                return parseOperand(tokenizer, parseExpression);
             }
         };
 
-        nextToken();
+        tokenizer.nextToken();
         var res = parseExpression();
-        if (token() !== null) {
-            throw new exceptions.ExpressionEndExpectedException(idx(), token());
+        if (tokenizer.token !== '') {
+            throw new exceptions.ExpressionEndExpectedException(tokenizer.idx, tokenizer.token);
         }
         return res;
     };
