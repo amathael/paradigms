@@ -1,7 +1,7 @@
-(defn i-gen
+(defn for-generator
   [i limit body]
   (if (< i limit)
-    (concat [(body i)] (i-gen (+ i 1) limit body))
+    (concat [(body i)] (for-generator (+ i 1) limit body))
     []))
 
 (defn tensor-shape
@@ -127,19 +127,17 @@
   (apply + (apply v* vectors)))
 (defn vect
   ([vector]
-   {:pre [(nvector? vector)]}
+   {:pre [(nvector? vector)
+          (v-const-size? 3 vector)]}
    vector)
   ([vec1 vec2]
    {:pre [(nvector? vec1)
           (nvector? vec2)
           (v-const-size? 3 vec1 vec2)]}
-   (vec (i-gen 0 3 (fn [i]
-                     (def l (mod (+ i 1) 3))
-                     (def r (mod (+ i 2) 3))
-                     (- (* (nth vec1 l)
-                           (nth vec2 r))
-                        (* (nth vec1 r)
-                           (nth vec2 l)))))))
+   (vec (for-generator 0 3
+                       (fn [i] (def l (mod (+ i 1) 3)) (def r (mod (+ i 2) 3))
+                         (- (* (nth vec1 l) (nth vec2 r))
+                            (* (nth vec1 r) (nth vec2 l)))))))
   ([vec1 vec2 & vectors]
    (apply vect (vect vec1 vec2) vectors)))
 
@@ -183,11 +181,11 @@
           (nmatrix? mat2)
           (m-connecting? mat1 mat2)]}
    (def columns (transpose mat2))
-   (vec (i-gen 0 (count mat1) (fn [i]
-                                (def row (nth mat1 i))
-                                (vec (i-gen 0 (count columns) (fn [j]
-                                                                (def col (nth columns j))
-                                                                (scalar row col))))))))
+   (vec (for-generator 0 (count mat1) (fn [i]
+                                        (def row (nth mat1 i))
+                                        (vec (for-generator 0 (count columns) (fn [j]
+                                                                                (def col (nth columns j))
+                                                                                (scalar row col))))))))
   ([mat1 mat2 & matrixes]
    (apply m*m (m*m mat1 mat2) matrixes)))
 
