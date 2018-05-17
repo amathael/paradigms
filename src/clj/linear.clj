@@ -35,17 +35,19 @@
   [mat1 mat2]
   (= (count (nth mat1 0)) (count mat2)))
 
-(defn nvector?
-  [vector]
-  (= (count (tensor-shape vector)) 1))
-
-(defn nmatrix?
-  [matrix]
-  (= (count (tensor-shape matrix)) 2))
-
 (defn ntensor?
   [tensor]
   (not= (tensor-shape tensor) nil))
+
+(defn nvector?
+  [vector]
+  {:pre [(ntensor? vector)]}
+  (= (count (fast-t-shape vector)) 1))
+
+(defn nmatrix?
+  [matrix]
+  {:pre [(ntensor? matrix)]}
+  (= (count (fast-t-shape matrix)) 2))
 
 (defn drop-first
   [shape]

@@ -142,9 +142,13 @@ var expressions = (function () {
         },
         function (name) {
             return new Multiply(
-                new Divide(new Add(
-                    new Multiply(this.op(0), this.op(0)),
-                    Const.ONE)),
+                new Divide(
+                    Const.ONE,
+                    new Add(
+                        new Multiply(this.op(0), this.op(0)),
+                        Const.ONE
+                    )
+                ),
                 this.op(0).diff(name)
             );
         }
