@@ -1,17 +1,11 @@
-(defn for-generator
-  [i limit body]
-  (if (< i limit)
-    (concat [(body i)] (for-generator (+ i 1) limit body))
-    []))
-
 (defn tensor-shape
   [tensor]
   (cond
     (number? tensor) []
     (= [] tensor) [0]
-    :else (do (def inner (mapv tensor-shape tensor))
-              (if (and (apply = inner) (not= (nth inner 0) nil))
-                (vec (concat [(count tensor)] (nth inner 0)))
+    :else (do (def inner (map tensor-shape tensor))
+              (if (and (apply = inner) (not (nil? (first inner))))
+                (vec (cons (count tensor) (first inner)))
                 nil))))
 
 (defn fast-t-shape
@@ -19,7 +13,7 @@
   (cond
     (number? tensor) []
     (= [] tensor) [0]
-    :else (vec (concat [(count tensor)] (fast-t-shape (nth tensor 0))))))
+    :else (vec (cons (count tensor) (fast-t-shape (first tensor))))))
 
 (defn eq-shape?
   [& tensors]
@@ -32,8 +26,9 @@
    (apply = [size] (map fast-t-shape vectors))))
 
 (defn m-connecting?
-  [mat1 mat2]
-  (= (count (nth mat1 0)) (count mat2)))
+  [matrix1 matrix2]
+  {:pre [(not= 0 (count matrix1))]}
+  (= (count (first matrix1)) (count matrix2)))
 
 (defn ntensor?
   [tensor]
@@ -49,35 +44,28 @@
   {:pre [(ntensor? matrix)]}
   (= (count (fast-t-shape matrix)) 2))
 
-(defn drop-first
-  [shape]
-  (drop 1 shape))
-
-(defn reshape?
+(defn can-reshape?
   [shape1 shape2]
-  (if (< (count shape1) (count shape2))
-    false
-    (or (= shape1 shape2) (reshape? (drop-first shape1) shape2))))
+  (or (and (= (count shape1) (count shape2)) (= shape1 shape2))
+      (and (> (count shape1) (count shape2)) (recur (rest shape1) shape2))))
+
+(defn wider
+  [sub-shape tensor]
+  (if (empty? sub-shape)
+    tensor
+    (vec (repeat (first sub-shape)
+                 (wider (rest sub-shape) tensor)))))
 
 (defn broadcast
   [shape tensor]
   {:pre [(ntensor? tensor)
          (nvector? shape)
-         (reshape? shape (fast-t-shape tensor))]}
-  (if (= shape (fast-t-shape tensor))
-    tensor
-    (vec (repeat (first shape)
-                 (broadcast (drop-first shape) tensor)))))
+         (can-reshape? shape (fast-t-shape tensor))]}
+  (wider (drop-last (count (fast-t-shape tensor)) shape) tensor))
 
-(defn greatest
-  ([]
-   [])
-  ([tensor & tensors]
-   (def n-shape (apply greatest tensors))
-   (def f-shape (fast-t-shape tensor))
-   (if (< (count f-shape) (count n-shape))
-     n-shape
-     f-shape)))
+(defn greatest-of
+  [tensor-array]
+  (apply max-key (fn [tensor] (count (fast-t-shape tensor))) tensor-array))
 
 (defn same-shape-op
   [fun tensor-array]
@@ -87,9 +75,9 @@
 
 (defn tensor-op
   [fun tensor-array]
-  (def g (apply greatest tensor-array))
+  (def g (fast-t-shape (greatest-of tensor-array)))
   {:pre [(every? ntensor? tensor-array)
-         (every? (fn [tensor] (reshape? g (fast-t-shape tensor))) tensor-array)]}
+         (every? (fn [tensor] (can-reshape? g (fast-t-shape tensor))) tensor-array)]}
   (same-shape-op fun (mapv (fn [tensor] (broadcast g tensor)) tensor-array)))
 
 (defn vector-op
@@ -130,16 +118,15 @@
    {:pre [(nvector? vector)
           (v-const-size? 3 vector)]}
    vector)
-  ([vec1 vec2]
-   {:pre [(nvector? vec1)
-          (nvector? vec2)
-          (v-const-size? 3 vec1 vec2)]}
-   (vec (for-generator 0 3
-                       (fn [i] (def l (mod (+ i 1) 3)) (def r (mod (+ i 2) 3))
-                         (- (* (nth vec1 l) (nth vec2 r))
-                            (* (nth vec1 r) (nth vec2 l)))))))
-  ([vec1 vec2 & vectors]
-   (apply vect (vect vec1 vec2) vectors)))
+  ([vector1 vector2]
+   {:pre [(nvector? vector1)
+          (nvector? vector2)
+          (v-const-size? 3 vector1 vector2)]}
+   (mapv (fn [i] (def l (mod (+ i 1) 3)) (def r (mod (+ i 2) 3))
+           (- (* (nth vector1 l) (nth vector2 r))
+              (* (nth vector1 r) (nth vector2 l)))) (range 0 3)))
+  ([vector1 vector2 & vectors]
+   (apply vect (vect vector1 vector2) vectors)))
 
 (defn v*s
   ([vector]
@@ -176,18 +163,18 @@
   ([matrix]
    {:pre [(nmatrix? matrix)]}
    matrix)
-  ([mat1 mat2]
-   {:pre [(nmatrix? mat1)
-          (nmatrix? mat2)
-          (m-connecting? mat1 mat2)]}
-   (def columns (transpose mat2))
-   (vec (for-generator 0 (count mat1) (fn [i]
-                                        (def row (nth mat1 i))
-                                        (vec (for-generator 0 (count columns) (fn [j]
-                                                                                (def col (nth columns j))
-                                                                                (scalar row col))))))))
-  ([mat1 mat2 & matrixes]
-   (apply m*m (m*m mat1 mat2) matrixes)))
+  ([matrix1 matrix2]
+   {:pre [(nmatrix? matrix1)
+          (nmatrix? matrix2)
+          (m-connecting? matrix1 matrix2)]}
+   (def t-matrix2 (transpose matrix2))
+   (mapv (fn [i] (def row (nth matrix1 i))
+           (mapv (fn [j] (def col (nth t-matrix2 j))
+                   (scalar row col))
+                 (range 0 (count t-matrix2))))
+         (range 0 (count matrix1))))
+  ([matrix1 matrix2 & matrixes]
+   (apply m*m (m*m matrix1 matrix2) matrixes)))
 
 (defn b+
   [& tensors]

@@ -4,7 +4,7 @@
 
 (defn variable
   [name]
-  (fn [vars] (get vars name)))
+  (fn [vars] (vars name)))
 
 (def operations {})
 
@@ -31,6 +31,6 @@
   [expression]
   (cond
     (string? expression) (parseFunction (read-string expression))
-    (seq? expression) (apply (get operations (str (first expression))) (mapv parseFunction (rest expression)))
+    (seq? expression) (apply (operations (str (first expression))) (mapv parseFunction (rest expression)))
     (number? expression) (constant expression)
     :else (variable (str expression))))
