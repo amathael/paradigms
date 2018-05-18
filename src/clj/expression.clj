@@ -36,6 +36,10 @@
   (operator smart-div "/"))
 (def negate
   (unary-operator - "negate"))
+(def sinh
+  (unary-operator (fn [val] (Math/sinh val)) "sinh"))
+(def cosh
+  (unary-operator (fn [val] (Math/cosh val)) "cosh"))
 
 (defn parseFunction
   [expression]
