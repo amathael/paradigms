@@ -1,19 +1,17 @@
 (defn tensor-shape
   [tensor]
-  (cond
-    (number? tensor) []
-    (= [] tensor) [0]
-    :else (do (def inner (map tensor-shape tensor))
-              (if (and (apply = inner) (not (nil? (first inner))))
-                (vec (cons (count tensor) (first inner)))
-                nil))))
+  (if (number? tensor)
+    []
+    (do (def inner (map tensor-shape tensor))
+        (if (and (apply = inner) (not (nil? (first inner))))
+          (vec (cons (count tensor) (first inner)))
+          nil))))
 
 (defn fast-t-shape
   [tensor]
-  (cond
-    (number? tensor) []
-    (= [] tensor) [0]
-    :else (vec (cons (count tensor) (fast-t-shape (first tensor))))))
+  (if (number? tensor)
+    []
+    (vec (cons (count tensor) (fast-t-shape (first tensor))))))
 
 (defn eq-shape?
   [& tensors]
@@ -36,13 +34,11 @@
 
 (defn nvector?
   [vector]
-  {:pre [(ntensor? vector)]}
-  (= (count (fast-t-shape vector)) 1))
+  (and (vector? vector) (every? number? vector)))
 
 (defn nmatrix?
   [matrix]
-  {:pre [(ntensor? matrix)]}
-  (= (count (fast-t-shape matrix)) 2))
+  (and (vector? matrix) (every? nvector? matrix) (not (empty? matrix))))
 
 (defn can-reshape?
   [shape1 shape2]

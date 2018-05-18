@@ -1,3 +1,7 @@
+(defn smart-div
+  [& values]
+  (reduce (fn [x y] (/ x (double y))) values))
+
 (defn constant
   [value]
   (fn [_] value))
@@ -8,10 +12,16 @@
 
 (def operations {})
 
+(defn unary-operator
+  [fun string]
+  (def operation (fn [operand]
+      (fn [vars] (fun (operand vars)))))
+  (def operations (assoc operations string operation))
+  operation)
+
 (defn operator
   [fun string]
-  (def operation
-    (fn [& operands]
+  (def operation (fn [& operands]
       (fn [vars] (apply fun (mapv (fn [x] (x vars)) operands)))))
   (def operations (assoc operations string operation))
   operation)
@@ -23,9 +33,9 @@
 (def multiply
   (operator * "*"))
 (def divide
-  (operator (fn [l r] (/ (double l) (double r))) "/"))
+  (operator smart-div "/"))
 (def negate
-  (operator - "negate"))
+  (unary-operator - "negate"))
 
 (defn parseFunction
   [expression]
