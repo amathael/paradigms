@@ -4,47 +4,53 @@
 
 (defn constant
   [value]
-  (fn [_] value))
+  (constantly value))
 
 (defn variable
   [name]
   (fn [vars] (vars name)))
 
-(def operations {})
-
 (defn unary-operator
-  [fun string]
-  (def operation (fn [operand]
-      (fn [vars] (fun (operand vars)))))
-  (def operations (assoc operations string operation))
-  operation)
+  [fun]
+  (fn [operand]
+    (fn [vars] (fun (operand vars)))))
 
 (defn operator
-  [fun string]
-  (def operation (fn [& operands]
-      (fn [vars] (apply fun (mapv (fn [x] (x vars)) operands)))))
-  (def operations (assoc operations string operation))
-  operation)
+  [fun]
+  (fn [& operands]
+    (fn [vars] (apply fun (mapv (fn [x] (x vars)) operands)))))
 
 (def add
-  (operator + "+"))
+  (operator +))
 (def subtract
-  (operator - "-"))
+  (operator -))
 (def multiply
-  (operator * "*"))
+  (operator *))
 (def divide
-  (operator smart-div "/"))
+  (operator smart-div))
 (def negate
-  (unary-operator - "negate"))
+  (unary-operator -))
 (def sinh
-  (unary-operator (fn [val] (Math/sinh val)) "sinh"))
+  (unary-operator (fn [val] (Math/sinh val))))
 (def cosh
-  (unary-operator (fn [val] (Math/cosh val)) "cosh"))
+  (unary-operator (fn [val] (Math/cosh val))))
 
-(defn parseFunction
-  [expression]
+(def operations
+  {
+   '+ add
+   '- subtract
+   '* multiply
+   '/ divide
+   'negate negate
+   'sinh sinh
+   'cosh cosh
+   })
+
+(defn parseExpression
+  [expr]
   (cond
-    (string? expression) (parseFunction (read-string expression))
-    (seq? expression) (apply (operations (str (first expression))) (mapv parseFunction (rest expression)))
-    (number? expression) (constant expression)
-    :else (variable (str expression))))
+    (seq? expr) (apply (operations (first expr)) (mapv parseExpression (rest expr)))
+    (number? expr) (constant expr)
+    :else (variable (str expr))))
+
+(def parseFunction (comp parseExpression read-string))

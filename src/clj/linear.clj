@@ -2,16 +2,15 @@
   [tensor]
   (if (number? tensor)
     []
-    (do (def inner (map tensor-shape tensor))
-        (if (and (apply = inner) (not (nil? (first inner))))
-          (vec (cons (count tensor) (first inner)))
-          nil))))
+    (let [inner (map tensor-shape tensor)]
+      (if (and (apply = inner) (not (nil? (first inner))))
+        (vec (cons (count tensor) (first inner)))))))
 
 (defn fast-t-shape
   [tensor]
-  (if (number? tensor)
-    []
-    (vec (cons (count tensor) (fast-t-shape (first tensor))))))
+  (vec ((fn [t] if (number? t)
+          []
+          (cons (count t) (fast-t-shape (first t)))) tensor)))
 
 (defn eq-shape?
   [& tensors]
@@ -71,10 +70,10 @@
 
 (defn tensor-op
   [fun tensor-array]
-  (def g (fast-t-shape (greatest-of tensor-array)))
-  {:pre [(every? ntensor? tensor-array)
-         (every? (fn [tensor] (can-reshape? g (fast-t-shape tensor))) tensor-array)]}
-  (same-shape-op fun (mapv (fn [tensor] (broadcast g tensor)) tensor-array)))
+  (let [g (fast-t-shape (greatest-of tensor-array))]
+    {:pre [(every? ntensor? tensor-array)
+           (every? (fn [tensor] (can-reshape? g (fast-t-shape tensor))) tensor-array)]}
+    (same-shape-op fun (mapv (fn [tensor] (broadcast g tensor)) tensor-array))))
 
 (defn vector-op
   [fun vector-array]
@@ -118,9 +117,11 @@
    {:pre [(nvector? vector1)
           (nvector? vector2)
           (v-const-size? 3 vector1 vector2)]}
-   (mapv (fn [i] (def l (mod (+ i 1) 3)) (def r (mod (+ i 2) 3))
-           (- (* (nth vector1 l) (nth vector2 r))
-              (* (nth vector1 r) (nth vector2 l)))) (range 0 3)))
+   (mapv (fn [i] (let [l (mod (+ i 1) 3)
+                       r (mod (+ i 2) 3)]
+                   (- (* (vector1 l) (vector2 r))
+                      (* (vector1 r) (vector2 l)))))
+         (range 0 3)))
   ([vector1 vector2 & vectors]
    (apply vect (vect vector1 vector2) vectors)))
 
@@ -163,12 +164,10 @@
    {:pre [(nmatrix? matrix1)
           (nmatrix? matrix2)
           (m-connecting? matrix1 matrix2)]}
-   (def t-matrix2 (transpose matrix2))
-   (mapv (fn [i] (def row (nth matrix1 i))
-           (mapv (fn [j] (def col (nth t-matrix2 j))
-                   (scalar row col))
-                 (range 0 (count t-matrix2))))
-         (range 0 (count matrix1))))
+   (let [t-matrix2 (transpose matrix2)]
+     (mapv (fn [i] (mapv (fn [j] (scalar (matrix1 i) (t-matrix2 j)))
+                         (range 0 (count t-matrix2))))
+           (range 0 (count matrix1)))))
   ([matrix1 matrix2 & matrixes]
    (apply m*m (m*m matrix1 matrix2) matrixes)))
 
