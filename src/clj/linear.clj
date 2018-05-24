@@ -8,9 +8,9 @@
 
 (defn fast-t-shape
   [tensor]
-  (vec ((fn [t] if (number? t)
-          []
-          (cons (count t) (fast-t-shape (first t)))) tensor)))
+  (vec ((fn [t] (if (number? t)
+                  []
+                  (cons (count t) (fast-t-shape (first t))))) tensor)))
 
 (defn eq-shape?
   [& tensors]
