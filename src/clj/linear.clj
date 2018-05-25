@@ -8,9 +8,10 @@
 
 (defn fast-t-shape
   [tensor]
-  (vec ((fn [t] (if (number? t)
-                  []
-                  (cons (count t) (fast-t-shape (first t))))) tensor)))
+  (vec ((fn inner [t]
+          (if (number? t)
+            []
+            (cons (count t) (inner (first t))))) tensor)))
 
 (defn eq-shape?
   [& tensors]
@@ -41,8 +42,10 @@
 
 (defn can-reshape?
   [shape1 shape2]
-  (or (and (= (count shape1) (count shape2)) (= shape1 shape2))
-      (and (> (count shape1) (count shape2)) (recur (rest shape1) shape2))))
+  (and (>= (count shape1) (count shape2))
+       (let [s1 (reverse shape1)
+             s2 (reverse shape2)]
+         (every? identity (map (fn [i] (== (nth s1 i) (nth s2 i))) (range (count s2)))))))
 
 (defn wider
   [sub-shape tensor]
