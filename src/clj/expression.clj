@@ -89,6 +89,8 @@
 (def evaluate (method :evaluate))
 (def diff (method :diff))
 
+(def operands (field :operands))
+
 (def ConstantProto
   (let [number (field :value)]
     {:toString (fn [this]
@@ -120,7 +122,7 @@
 (let [operands (field :operands)
       write-as (field :write-as)
       function (field :function)
-      derivative (field :derivative)]
+      derivative (method :derivative)]
   (def Operator
     {:toString (fn [this]
                  (str "(" (write-as this) " "
@@ -131,10 +133,7 @@
                         (mapv (fn [operand] (evaluate operand vars))
                               (operands this))))
      :diff     (fn [this var]
-                 ((derivative this)
-                   (vec (operands this))
-                   (mapv (fn [operand] (diff operand var))
-                         (operands this))))}))
+                 (derivative this var))}))
 
 (defn operator-factory
   [symbol function derivative & unary]
@@ -147,20 +146,37 @@
       {:prototype proto
        :operands  (vec operands)})))
 
-(def Add (operator-factory '+ + (fn [ops der] (apply Add der))))
-(def Subtract (operator-factory '- - (fn [ops der] (apply Subtract der))))
-(def Multiply (operator-factory '* * (fn [ops der] (Add
-                                                     (Multiply (ops 0) (der 1))
-                                                     (Multiply (ops 1) (der 0))))))
-(def Divide (operator-factory '/ smart-div (fn [ops der] (Divide
-                                                           (Subtract (Multiply (ops 1) (der 0))
-                                                                     (Multiply (ops 0) (der 1)))
-                                                           (Multiply (ops 1) (ops 1))))))
-(def Negate (operator-factory 'negate - (fn [ops der] (apply Negate der))
-                              'unary))
-(def Cos)
-(def Sin (operator-factory 'sin (fn [x] (Math/sin x)) (fn [ops der] (apply Multiply (apply Cos ops) der))))
-(def Cos (operator-factory 'cos (fn [x] (Math/cos x)) (fn [ops der] (Negate (apply Multiply (apply Sin ops) der)))))
+(let [op-at (fn [this idx] ((operands this) idx))
+      do-at (fn [var this idx] (diff (op-at this idx) var))
+      d-operands (fn [this var] (map (fn [operand] (diff operand var)) (operands this)))]
+  ; any amount of args
+  (def Add
+    (operator-factory '+ + (fn [this var] (apply Add (d-operands this var)))))
+  ; any amount of args
+  (def Subtract
+    (operator-factory '- - (fn [this var] (apply Subtract (d-operands this var)))))
+  ; only two args
+  (def Multiply
+    (operator-factory '* * (fn [this var] (Add (Multiply (op-at this 0) (do-at var this 1))
+                                               (Multiply (op-at this 1) (do-at var this 0))))))
+  ; only two args
+  (def Divide
+    (operator-factory '/ smart-div (fn [this var] (Divide (Subtract (Multiply (op-at this 1) (do-at var this 0))
+                                                                    (Multiply (op-at this 0) (do-at var this 1)))
+                                                          (Multiply (op-at this 1) (op-at this 1))))))
+  ; unary
+  (def Negate
+    (operator-factory 'negate - (fn [this var] (apply Negate (d-operands this var)))
+                      'unary))
+  (def Cos)
+  ; unary
+  (def Sin
+    (operator-factory 'sin (fn [x] (Math/sin x)) (fn [this var] (Multiply (Cos (op-at this 0)) (do-at var this 0)))
+                      'unary))
+  ; unary
+  (def Cos
+    (operator-factory 'cos (fn [x] (Math/cos x)) (fn [this var] (Negate (Multiply (Sin (op-at this 0)) (do-at var this 0))))
+                      'unary)))
 
 (def objectOperations
   {
