@@ -1,6 +1,32 @@
+; =====             =====
+; =====    Utils    =====
+; =====             =====
+
 (defn smart-div
   [& values]
   (reduce (fn [x y] (/ x (double y))) values))
+
+(defn get-property
+  [this key]
+  (if (contains? this key)
+    (this key)
+    (get-property (:prototype this) key)))
+
+(defn call-function
+  [this key & args]
+  (apply (get-property this key) this args))
+
+(defn field
+  [key]
+  (fn [this] (get-property this key)))
+
+(defn method
+  [key]
+  (fn [this & args] (apply call-function this key args)))
+
+; =====             =====
+; ===== Homework 13 =====
+; =====             =====
 
 (defn constant
   [value]
@@ -35,22 +61,159 @@
 (def cosh
   (unary-operator (fn [val] (Math/cosh val))))
 
-(def operations
+(def functionalOperations
   {
-   '+ add
-   '- subtract
-   '* multiply
-   '/ divide
+   '+      add
+   '-      subtract
+   '*      multiply
+   '/      divide
    'negate negate
-   'sinh sinh
-   'cosh cosh
+   'sinh   sinh
+   'cosh   cosh
    })
 
-(defn parseExpression
+(defn parseFunctionalExpression
   [expr]
   (cond
-    (seq? expr) (apply (operations (first expr)) (mapv parseExpression (rest expr)))
+    (seq? expr) (apply (functionalOperations (first expr)) (mapv parseFunctionalExpression (rest expr)))
     (number? expr) (constant expr)
     :else (variable (str expr))))
+(def parseFunction
+  (comp parseFunctionalExpression read-string))
 
-(def parseFunction (comp parseExpression read-string))
+; =====             =====
+; ===== Homework 14 =====
+; =====             =====
+
+(def toString (method :toString))
+(def evaluate (method :evaluate))
+(def diff (method :diff))
+
+(def ConstantProto
+  (let [number (field :value)]
+    {:toString (fn [this]
+                 (let [value (number this)] (if (integer? value) (str value) (format "%.1f" value))))
+     :evaluate (fn [this _]
+                 (number this))}))
+(defn Constant
+  [number]
+  {:prototype ConstantProto
+   :value     number})
+(let [zero (Constant 0)]
+  (def ConstantProto (assoc ConstantProto :diff (fn [this _] zero))))
+
+(def VariableProto
+  (let [name (field :value)
+        zero (Constant 0)
+        one (Constant 1)]
+    {:toString (fn [this]
+                 (name this))
+     :evaluate (fn [this vars]
+                 (vars (name this)))
+     :diff     (fn [this var]
+                 (if (= (name this) var) one zero))}))
+(defn Variable
+  [var-name]
+  {:prototype VariableProto
+   :value     var-name})
+
+(let [operands (field :operands)
+      write-as (field :write-as)
+      function (field :function)
+      derivative (field :derivative)]
+  (def Operator
+    {:toString (fn [this] (str "(" (write-as this) " "
+                               (clojure.string/join " " (mapv toString (operands this)))
+                               ")"))
+     :evaluate (fn [this vars] (apply (function this)
+                                      (mapv (fn [operand] (evaluate operand vars))
+                                            (operands this))))
+     :diff     (fn [this var] ((derivative this)
+                                (vec (operands this))
+                                (mapv (fn [operand] (diff operand var))
+                                      (operands this))))}))
+
+(defn operator-factory
+  [symbol function derivative & unary]
+  (let [proto {:prototype  Operator
+               :write-as   symbol
+               :function   function
+               :derivative derivative}]
+    (fn [& operands]
+      {:pre [(or (zero? (count unary)) (== 1 (count operands)))]}
+      {:prototype proto
+       :operands  (vec operands)})))
+
+(def Add (operator-factory '+ + (fn [ops der] (apply Add der))))
+(def Subtract (operator-factory '- - (fn [ops der] (apply Subtract der))))
+(def Multiply (operator-factory '* * (fn [ops der] (Add
+                                                     (Multiply (ops 0) (der 1))
+                                                     (Multiply (ops 1) (der 0))))))
+(def Divide (operator-factory '/ smart-div (fn [ops der] (Divide
+                                                           (Subtract (Multiply (ops 1) (der 0))
+                                                                     (Multiply (ops 0) (der 1)))
+                                                           (Multiply (ops 1) (ops 1))))))
+(def Negate (operator-factory 'negate - (fn [ops der] (apply Negate der))
+                              'unary))
+
+(def objectOperations
+  {
+   '+      Add
+   '-      Subtract
+   '*      Multiply
+   '/      Divide
+   'negate Negate
+   })
+(def termOperations #{'+ '-})
+(def factorOperations #{'/ '*})
+
+(defn parseObjectExpression
+  [expr]
+  (cond
+    (seq? expr) (apply (objectOperations (first expr)) (mapv parseObjectExpression (rest expr)))
+    (number? expr) (Constant expr)
+    :else (Variable (str expr))))
+(def parseObject
+  (comp parseObjectExpression read-string))
+
+(defn parseObjectInfixExpression
+  [expr]
+  (with-local-vars [create-factor (fn [])
+                    parse-factor (fn [])
+                    parse-term (fn [])
+                    parse-expression (fn [])]
+    (var-set create-factor
+             (fn [factor] (cond
+                            (seq? factor) ((parse-expression factor) :result)
+                            (number? factor) (Constant factor)
+                            :else (let [string (str factor)] (if (clojure.string/starts-with? string "-")
+                                                               (Negate (create-factor (apply str (rest string))))
+                                                               (Variable string))))))
+    (var-set parse-factor
+             (fn [left] {:result (create-factor (first left))
+                         :left   (rest left)}))
+    (var-set parse-term
+             (fn
+               ([left]
+                (apply parse-term (vals (parse-factor left))))
+               ([acc left]
+                (if (or (empty? left) (not (contains? factorOperations (first left))))
+                  {:result acc
+                   :left   left}
+                  (let [op (objectOperations (first left))
+                        factor (parse-factor (rest left))]
+                    (parse-term (op acc (factor :result)) (factor :left)))))))
+    (var-set parse-expression
+             (fn
+               ([left]
+                (apply parse-expression (vals (parse-term left))))
+               ([acc left]
+                (if (or (empty? left) (not (contains? termOperations (first left))))
+                  {:result acc
+                   :left   left}
+                  (let [op (objectOperations (first left))
+                        term (parse-term (rest left))]
+                    (parse-expression (op acc (term :result)) (term :left)))))))
+    ((parse-expression expr) :result)))
+(def parseObjectInfix
+  (comp parseObjectInfixExpression read-string (fn [string] (str "(" string ")"))))
