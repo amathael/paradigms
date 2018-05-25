@@ -122,16 +122,19 @@
       function (field :function)
       derivative (field :derivative)]
   (def Operator
-    {:toString (fn [this] (str "(" (write-as this) " "
-                               (clojure.string/join " " (mapv toString (operands this)))
-                               ")"))
-     :evaluate (fn [this vars] (apply (function this)
-                                      (mapv (fn [operand] (evaluate operand vars))
-                                            (operands this))))
-     :diff     (fn [this var] ((derivative this)
-                                (vec (operands this))
-                                (mapv (fn [operand] (diff operand var))
-                                      (operands this))))}))
+    {:toString (fn [this]
+                 (str "(" (write-as this) " "
+                      (clojure.string/join " " (mapv toString (operands this)))
+                      ")"))
+     :evaluate (fn [this vars]
+                 (apply (function this)
+                        (mapv (fn [operand] (evaluate operand vars))
+                              (operands this))))
+     :diff     (fn [this var]
+                 ((derivative this)
+                   (vec (operands this))
+                   (mapv (fn [operand] (diff operand var))
+                         (operands this))))}))
 
 (defn operator-factory
   [symbol function derivative & unary]
@@ -155,6 +158,9 @@
                                                            (Multiply (ops 1) (ops 1))))))
 (def Negate (operator-factory 'negate - (fn [ops der] (apply Negate der))
                               'unary))
+(def Cos)
+(def Sin (operator-factory 'sin (fn [x] (Math/sin x)) (fn [ops der] (apply Multiply (apply Cos ops) der))))
+(def Cos (operator-factory 'cos (fn [x] (Math/cos x)) (fn [ops der] (Negate (apply Multiply (apply Sin ops) der)))))
 
 (def objectOperations
   {
@@ -163,7 +169,10 @@
    '*      Multiply
    '/      Divide
    'negate Negate
+   'sin    Sin
+   'cos    Cos
    })
+(def unaryOperations #{'sin 'cos 'negate})
 (def termOperations #{'+ '-})
 (def factorOperations #{'/ '*})
 
@@ -183,15 +192,20 @@
                     parse-term (fn [])
                     parse-expression (fn [])]
     (var-set create-factor
-             (fn [factor] (cond
-                            (seq? factor) ((parse-expression factor) :result)
-                            (number? factor) (Constant factor)
-                            :else (let [string (str factor)] (if (clojure.string/starts-with? string "-")
-                                                               (Negate (create-factor (apply str (rest string))))
-                                                               (Variable string))))))
+             (fn [factor]
+               (cond
+                 (seq? factor) ((parse-expression factor) :result)
+                 (number? factor) (Constant factor)
+                 :else (Variable (str factor)))))
     (var-set parse-factor
-             (fn [left] {:result (create-factor (first left))
-                         :left   (rest left)}))
+             (fn [left]
+               (if (contains? unaryOperations (first left))
+                 (let [op (objectOperations (first left))
+                       factor (parse-factor (rest left))]
+                   {:result (op (factor :result))
+                    :left   (factor :left)})
+                 {:result (create-factor (first left))
+                  :left   (rest left)})))
     (var-set parse-term
              (fn
                ([left]
