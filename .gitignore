@@ -1,0 +1,7 @@
+.idea/
+.git/
+out/
+paradigms-2018.iml
+
+*.class
+*.output
